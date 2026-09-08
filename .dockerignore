@@ -1,0 +1,14 @@
+.git
+.github
+Docs
+docs
+**/.venv
+**/__pycache__
+**/node_modules
+**/.svelte-kit
+frontend/build
+backend/.venv
+*.md
+.DS_Store
+.env
+.env.*
