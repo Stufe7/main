@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { COUNTRIES } from '$lib/signup/countries';
+	import { writeSignupDraft } from '$lib/signup/draft';
 	import { checkCompanyEmail } from '$lib/companyEmail/allowability';
 	import { getSupabase, isSupabaseConfigured } from '$lib/supabase/client';
 
@@ -25,6 +27,7 @@
 	});
 	let otp = $state('');
 	let otpEmail = $state('');
+	let otpCreateUser = $state(false);
 
 	const configured = isSupabaseConfigured();
 
@@ -56,11 +59,19 @@
 		}
 		const supabase = getSupabase();
 		if (!supabase) return;
+		const trimmed = email.trim();
+		const { data: existing } = await supabase.auth.getSession();
+		if (existing.session?.user.email?.toLowerCase() === trimmed.toLowerCase()) {
+			otpEmail = trimmed;
+			otpCreateUser = createUser;
+			await continueAfterVerify();
+			return;
+		}
 		busy = true;
 		error = '';
 		info = '';
 		const { error: otpError } = await supabase.auth.signInWithOtp({
-			email: email.trim(),
+			email: trimmed,
 			options: {
 				shouldCreateUser: createUser
 			}
@@ -73,9 +84,16 @@
 			console.error('signInWithOtp failed', otpError);
 			return;
 		}
-		otpEmail = email.trim();
+		otpEmail = trimmed;
+		otpCreateUser = createUser;
 		step = 'otp';
 		info = `We emailed a sign-in code to ${otpEmail}.`;
+	}
+
+	async function continueAfterVerify() {
+		const next = otpCreateUser ? '/signup/timezone' : '/app';
+		close();
+		await goto(next);
 	}
 
 	async function submitLogin(event: Event) {
@@ -100,13 +118,10 @@
 			error = 'Company URL must start with https://';
 			return;
 		}
-		sessionStorage.setItem(
-			'stufe7.signup',
-			JSON.stringify({
-				...signup,
-				email: signup.email.trim()
-			})
-		);
+		writeSignupDraft({
+			...signup,
+			email: signup.email.trim()
+		});
 		await sendOtp(signup.email, true);
 	}
 
@@ -116,17 +131,24 @@
 		if (!supabase) return;
 		busy = true;
 		error = '';
-		const { error: verifyError } = await supabase.auth.verifyOtp({
-			email: otpEmail,
-			token: otp.trim(),
-			type: 'email'
-		});
+		const token = otp.trim();
+		const types = otpCreateUser ? (['signup', 'email'] as const) : (['email', 'signup'] as const);
+		let verifyError: { message: string } | null = null;
+		for (const type of types) {
+			const result = await supabase.auth.verifyOtp({
+				email: otpEmail,
+				token,
+				type
+			});
+			verifyError = result.error;
+			if (!result.error) break;
+		}
 		busy = false;
 		if (verifyError) {
 			error = verifyError.message;
 			return;
 		}
-		close();
+		await continueAfterVerify();
 	}
 </script>
 

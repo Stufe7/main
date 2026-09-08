@@ -2,6 +2,9 @@
 Docs/
 docs/
 
+# Local UAT captures (may contain secrets)
+uat/
+
 .DS_Store
 *.log
 .env

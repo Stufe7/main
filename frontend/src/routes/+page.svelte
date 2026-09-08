@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import AuthModal from '$lib/auth/AuthModal.svelte';
+	import { auth, signOut } from '$lib/auth/session.svelte';
 
 	let authOpen = $state(false);
 	let authTab = $state<'login' | 'signup'>('signup');
@@ -7,6 +9,10 @@
 	function openAuth(tab: 'login' | 'signup') {
 		authTab = tab;
 		authOpen = true;
+	}
+
+	async function leave() {
+		await signOut();
 	}
 
 	const features = [
@@ -50,8 +56,13 @@
 		<img src="/stufe7-logo.svg" alt="Stufe7" class="wordmark" />
 		<p class="tagline">Lightweight. Focused. For What’s Next.</p>
 		<div class="nav-actions">
-			<button type="button" class="ghost" onclick={() => openAuth('login')}>Log in</button>
-			<button type="button" class="solid" onclick={() => openAuth('signup')}>Sign up</button>
+			{#if auth.ready && auth.email}
+				<button type="button" class="solid" onclick={() => goto('/app')}>Continue</button>
+				<button type="button" class="ghost" onclick={leave}>Sign out</button>
+			{:else}
+				<button type="button" class="ghost" onclick={() => openAuth('login')}>Log in</button>
+				<button type="button" class="solid" onclick={() => openAuth('signup')}>Sign up</button>
+			{/if}
 		</div>
 	</header>
 
@@ -62,8 +73,12 @@
 			Keep track of your companies, contacts, conversations and next actions — all in one place.
 		</p>
 		<div class="hero-actions">
-			<button type="button" class="solid" onclick={() => openAuth('signup')}>Get started free</button>
-			<button type="button" class="ghost" onclick={() => openAuth('login')}>Log in</button>
+			{#if auth.ready && auth.email}
+				<button type="button" class="solid" onclick={() => goto('/app')}>Continue</button>
+			{:else}
+				<button type="button" class="solid" onclick={() => openAuth('signup')}>Get started free</button>
+				<button type="button" class="ghost" onclick={() => openAuth('login')}>Log in</button>
+			{/if}
 		</div>
 	</section>
 
@@ -87,8 +102,12 @@
 
 	<footer>
 		<div class="footer-actions">
-			<button type="button" class="solid" onclick={() => openAuth('signup')}>Sign up</button>
-			<button type="button" class="ghost" onclick={() => openAuth('login')}>Log in</button>
+			{#if auth.ready && auth.email}
+				<button type="button" class="solid" onclick={() => goto('/app')}>Continue</button>
+			{:else}
+				<button type="button" class="solid" onclick={() => openAuth('signup')}>Sign up</button>
+				<button type="button" class="ghost" onclick={() => openAuth('login')}>Log in</button>
+			{/if}
 		</div>
 		<p>
 			<a href="mailto:support@stufe7.com">support@stufe7.com</a>

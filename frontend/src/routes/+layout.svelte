@@ -1,6 +1,10 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { startAuthListener } from '$lib/auth/session.svelte';
 	import './layout.css';
 	let { children } = $props();
+
+	onMount(startAuthListener);
 </script>
 
 <svelte:head>
