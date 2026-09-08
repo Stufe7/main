@@ -67,7 +67,10 @@
 		});
 		busy = false;
 		if (otpError) {
-			error = otpError.message;
+			const status = 'status' in otpError ? String(otpError.status) : '';
+			const code = 'code' in otpError && otpError.code ? String(otpError.code) : '';
+			error = [status, code, otpError.message].filter(Boolean).join(' — ');
+			console.error('signInWithOtp failed', otpError);
 			return;
 		}
 		otpEmail = email.trim();
