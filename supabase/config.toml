@@ -1,3 +1,7 @@
+# For detailed configuration reference documentation, visit:
+# https://supabase.com/docs/guides/local-development/cli/config
+# Working directory for the GitHub integration is the repo root (`.`).
+# Deploy to production applies supabase/migrations on push to main.
 project_id = "stufe7"
 
 [api]
