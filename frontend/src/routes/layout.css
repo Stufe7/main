@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+
+html {
+	background: #f6f7fb;
+}
+
+body {
+	margin: 0;
+	font-family:
+		Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	color: #20265e;
+}
