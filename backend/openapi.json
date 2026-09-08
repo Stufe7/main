@@ -54,6 +54,29 @@
           }
         }
       }
+    },
+    "/v1/ops/spike1": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Spike1",
+        "operationId": "spike1_v1_ops_spike1_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Spike1 V1 Ops Spike1 Get"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

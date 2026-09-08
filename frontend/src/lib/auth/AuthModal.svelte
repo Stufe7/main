@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { COUNTRIES } from '$lib/signup/countries';
 	import { writeSignupDraft } from '$lib/signup/draft';
+	import { formatSignInOtpError } from '$lib/auth/errors';
 	import { checkCompanyEmail } from '$lib/companyEmail/allowability';
 	import { getSupabase, isSupabaseConfigured } from '$lib/supabase/client';
 
@@ -78,9 +79,7 @@
 		});
 		busy = false;
 		if (otpError) {
-			const status = 'status' in otpError ? String(otpError.status) : '';
-			const code = 'code' in otpError && otpError.code ? String(otpError.code) : '';
-			error = [status, code, otpError.message].filter(Boolean).join(' — ');
+			error = formatSignInOtpError(otpError);
 			console.error('signInWithOtp failed', otpError);
 			return;
 		}

@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     app_env: str = "local"
     app_version: str = "0.0.0-phase0"
     cors_origins: str = "http://localhost:5173"
+    database_url: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:

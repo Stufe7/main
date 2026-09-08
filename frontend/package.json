@@ -12,7 +12,7 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
-		"test": "node --test --experimental-strip-types src/lib/companyEmail/allowability.test.ts",
+		"test": "node --test --experimental-strip-types src/lib/companyEmail/allowability.test.ts src/lib/auth/errors.test.ts",
 		"generate:api": "openapi-typescript ../backend/openapi.json -o src/lib/api/v1.d.ts"
 	},
 	"devDependencies": {
