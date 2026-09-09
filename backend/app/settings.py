@@ -23,7 +23,10 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        origins = [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        if "https://www.stufe7.com" in origins and "https://admin.stufe7.com" not in origins:
+            origins.append("https://admin.stufe7.com")
+        return origins
 
 
 settings = Settings()

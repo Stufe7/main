@@ -82,12 +82,6 @@
 			<a href="/app/contacts" class:on={navOn('/app/contacts')} aria-current={navOn('/app/contacts') ? 'page' : undefined}>Contacts</a>
 			<a href="/app/activities" class:on={navOn('/app/activities')} aria-current={navOn('/app/activities') ? 'page' : undefined}>Activities</a>
 			<a href="/app/campaigns" class:on={navOn('/app/campaigns')} aria-current={navOn('/app/campaigns') ? 'page' : undefined}>Campaigns</a>
-			{#if session?.platform_admin}
-				<a href="/platform/approvals" class:on={navOn('/platform/approvals')} aria-current={navOn('/platform/approvals') ? 'page' : undefined}>Approvals</a>
-			{/if}
-			{#if session?.privacy_operator}
-				<a href="/platform/privacy" class:on={navOn('/platform/privacy')} aria-current={navOn('/platform/privacy') ? 'page' : undefined}>Privacy</a>
-			{/if}
 		</nav>
 		<div class="end">
 			{#if session && session.memberships.length > 1}

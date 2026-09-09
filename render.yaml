@@ -8,6 +8,12 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: HOST_HEADER
+        value: x-forwarded-host
+      - key: PROTOCOL_HEADER
+        value: x-forwarded-proto
+      - key: PUBLIC_ADMIN_ORIGIN
+        value: https://admin.stufe7.com
 
   - type: web
     name: stufe7-api

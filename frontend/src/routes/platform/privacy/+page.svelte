@@ -74,11 +74,6 @@
 </svelte:head>
 
 <div class="page">
-	<header>
-		<img src="/stufe7-logo.svg" alt="Stufe7" class="wordmark" />
-		<a href="/app">Back to app</a>
-	</header>
-	<h1>Privacy erasure</h1>
 	<p>
 		Active privacy operators only. This is not an Entity Admin or Platform Super-Admin path. External
 		requests arrive at privacy@stufe7.com.
@@ -124,19 +119,10 @@
 
 <style>
 	.page {
-		min-height: 100vh;
+		min-height: calc(100vh - 4rem);
 		padding: 1.25rem 1rem 3rem;
 		width: min(44rem, 100%);
 		margin-inline: auto;
-	}
-	header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 1.25rem;
-	}
-	.wordmark {
-		height: 1.75rem;
 	}
 	.card,
 	form,
@@ -154,8 +140,7 @@
 	select,
 	input,
 	textarea,
-	button,
-	a {
+	button {
 		font: inherit;
 	}
 	input,
@@ -168,23 +153,15 @@
 	textarea {
 		min-height: 4rem;
 	}
-	button,
-	a {
+	button {
+		border: 0;
 		border-radius: 999px;
 		padding: 0.45rem 0.9rem;
 		font-weight: 650;
-		text-decoration: none;
-		width: fit-content;
-	}
-	button {
-		border: 0;
 		background: #20265e;
 		color: white;
 		cursor: pointer;
-	}
-	a {
-		border: 1px solid #20265e;
-		color: #20265e;
+		width: fit-content;
 	}
 	.muted {
 		color: #5b607a;

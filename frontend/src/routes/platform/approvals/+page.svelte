@@ -63,6 +63,10 @@
 		}
 		try {
 			const session = await api<SessionInfo>('/v1/session');
+			if (!session.platform_admin && session.privacy_operator) {
+				await goto('/platform/privacy');
+				return;
+			}
 			if (!session.platform_admin) {
 				error = 'Platform Super-Admin access is required.';
 				return;
@@ -138,11 +142,6 @@
 </svelte:head>
 
 <div class="page">
-	<header>
-		<img src="/stufe7-logo.svg" alt="Stufe7" class="wordmark" />
-		<a href="/app">Back to app</a>
-	</header>
-	<h1>Platform console</h1>
 	<p class="muted">Counts only. Tenant CRM records are not shown here.</p>
 	{#if error}
 		<p class="error">{error}</p>
@@ -244,19 +243,10 @@
 
 <style>
 	.page {
-		min-height: 100vh;
+		min-height: calc(100vh - 4rem);
 		padding: 1.25rem 1rem 3rem;
 		width: min(52rem, 100%);
 		margin-inline: auto;
-	}
-	header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 1.25rem;
-	}
-	.wordmark {
-		height: 1.75rem;
 	}
 	.card {
 		background: white;
@@ -265,7 +255,6 @@
 		margin-bottom: 1rem;
 		box-shadow: 0 10px 30px rgb(32 38 94 / 0.06);
 	}
-	h1,
 	h2,
 	h3 {
 		margin: 0 0 0.5rem;
@@ -317,8 +306,7 @@
 		font: inherit;
 	}
 	.solid,
-	.ghost,
-	a {
+	.ghost {
 		border-radius: 999px;
 		padding: 0.45rem 0.9rem;
 		font: inherit;
@@ -332,8 +320,7 @@
 		color: white;
 		cursor: pointer;
 	}
-	.ghost,
-	a {
+	.ghost {
 		border: 1px solid #20265e;
 		background: white;
 		color: #20265e;

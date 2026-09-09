@@ -9,8 +9,13 @@
 	type Tab = 'login' | 'signup';
 	type Step = 'form' | 'otp';
 
-	let { open = $bindable(false), tab = $bindable<Tab>('login') }: { open?: boolean; tab?: Tab } =
-		$props();
+	let { open = $bindable(false), tab = $bindable<Tab>('login'), allowSignup = true, nextPath = '/app', dismissible = true }: {
+		open?: boolean;
+		tab?: Tab;
+		allowSignup?: boolean;
+		nextPath?: string;
+		dismissible?: boolean;
+	} = $props();
 
 	let step = $state<Step>('form');
 	let busy = $state(false);
@@ -97,7 +102,7 @@
 	}
 
 	async function continueAfterVerify() {
-		const next = otpCreateUser ? '/signup/timezone' : '/app';
+		const next = otpCreateUser ? '/signup/timezone' : nextPath;
 		close();
 		await goto(next);
 	}
@@ -165,16 +170,24 @@
 
 {#if open}
 	<div class="modal-root">
-		<button class="backdrop" type="button" aria-label="Close" onclick={close}></button>
+		{#if dismissible}
+			<button class="backdrop" type="button" aria-label="Close" onclick={close}></button>
+		{:else}
+			<div class="backdrop"></div>
+		{/if}
 		<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title">
 			<div class="tabs">
 				<button class:active={tab === 'login'} type="button" onclick={() => switchTab('login')}
 					>Log in</button
 				>
-				<button class:active={tab === 'signup'} type="button" onclick={() => switchTab('signup')}
-					>Sign up</button
-				>
-				<button class="close" type="button" aria-label="Close" onclick={close}>×</button>
+				{#if allowSignup}
+					<button class:active={tab === 'signup'} type="button" onclick={() => switchTab('signup')}
+						>Sign up</button
+					>
+				{/if}
+				{#if dismissible}
+					<button class="close" type="button" aria-label="Close" onclick={close}>×</button>
+				{/if}
 			</div>
 
 			{#if !configured}

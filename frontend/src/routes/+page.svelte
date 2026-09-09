@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import AuthModal from '$lib/auth/AuthModal.svelte';
+	import AdminHome from '$lib/admin/AdminHome.svelte';
 	import { auth, signOut } from '$lib/auth/session.svelte';
 
 	let authOpen = $state(false);
 	let authTab = $state<'login' | 'signup'>('signup');
+	const admin = $derived(page.data.adminHost === true);
 
 	function openAuth(tab: 'login' | 'signup') {
 		authTab = tab;
@@ -44,14 +47,21 @@
 </script>
 
 <svelte:head>
-	<title>Stufe7 — Lightweight. Focused. For What’s Next.</title>
-	<meta
-		name="description"
-		content="Keep track of your companies, contacts, conversations and next actions — all in one place."
-	/>
+	{#if admin}
+		<title>Stufe7 Admin</title>
+	{:else}
+		<title>Stufe7 — Lightweight. Focused. For What’s Next.</title>
+		<meta
+			name="description"
+			content="Keep track of your companies, contacts, conversations and next actions — all in one place."
+		/>
+	{/if}
 </svelte:head>
 
-<div class="page">
+{#if admin}
+	<AdminHome />
+{:else}
+	<div class="page">
 	<header class="nav">
 		<img src="/stufe7-logo.svg" alt="Stufe7" class="wordmark" />
 		<p class="tagline">Lightweight. Focused. For What’s Next.</p>
@@ -115,9 +125,10 @@
 			<a href="mailto:privacy@stufe7.com">privacy@stufe7.com</a>
 		</p>
 	</footer>
-</div>
+	</div>
 
-<AuthModal bind:open={authOpen} bind:tab={authTab} />
+	<AuthModal bind:open={authOpen} bind:tab={authTab} />
+{/if}
 
 <style>
 	.page {
