@@ -43,7 +43,7 @@
 				method: 'POST',
 				body: JSON.stringify({ email, role })
 			});
-			info = 'Invitation recorded. They can open the link in the email, or use /invite/{id} after OTP login.';
+			info = 'Invitation has been sent.';
 			email = '';
 			await load();
 		} catch (err) {
