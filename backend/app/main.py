@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.account import router as account_router
 from app.approvals import router as approvals_router
 from app.campaigns import router as campaigns_router
 from app.companies import router as companies_router
@@ -38,6 +39,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(signup_router)
+app.include_router(account_router)
 app.include_router(approvals_router)
 app.include_router(invitations_router)
 app.include_router(members_router)

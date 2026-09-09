@@ -64,6 +64,7 @@ export type SessionInfo = {
 	pending_registration: boolean;
 	platform_admin: boolean;
 	privacy_operator: boolean;
+	email_sync_error?: string | null;
 };
 
 export type SignupComplete = {

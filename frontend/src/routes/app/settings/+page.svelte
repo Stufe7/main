@@ -1,1 +1,1 @@
-<p>Redirecting to Digest settings…</p>
+<p>Redirecting to Account settings…</p>

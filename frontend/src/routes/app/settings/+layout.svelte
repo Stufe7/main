@@ -22,6 +22,7 @@
 </script>
 
 <nav class="tabs" aria-label="Settings">
+	<a href="/app/settings/account" class:on={path.startsWith('/app/settings/account')}>Account</a>
 	{#if admin}
 		<a href="/app/settings/general" class:on={path.startsWith('/app/settings/general')}>General</a>
 		<a href="/app/settings/users" class:on={path.startsWith('/app/settings/users')}>Users</a>

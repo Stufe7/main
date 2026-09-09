@@ -48,6 +48,7 @@ class SessionOut(BaseModel):
     pending_registration: bool
     platform_admin: bool
     privacy_operator: bool
+    email_sync_error: str | None = None
 
 
 def _runtime_claims(cur, claims: Claims) -> None:
@@ -152,6 +153,9 @@ def session(
     claims: Annotated[Claims, Depends(bearer_claims)],
     user_id: Annotated[str, Depends(require_user_id)],
 ) -> SessionOut:
+    from app.account import sync_confirmed_email
+
+    email_sync_error = sync_confirmed_email(claims, user_id)
     with runtime_connection() as connection, connection.cursor() as cur:
         _runtime_claims(cur, claims)
         cur.execute(
@@ -187,11 +191,15 @@ def session(
         platform_admin = bool(cur.fetchone()[0])
         cur.execute("select public.app_is_privacy_operator(%s)", (user_id,))
         privacy_operator = bool(cur.fetchone()[0])
+        cur.execute("select email from public.app_user where id = %s", (user_id,))
+        stored = cur.fetchone()
+        stored_email = stored[0] if stored else None
     return SessionOut(
         user_id=user_id,
-        email=claims.get("email"),
+        email=stored_email or claims.get("email"),
         memberships=memberships,
         pending_registration=pending,
         platform_admin=platform_admin,
         privacy_operator=privacy_operator,
+        email_sync_error=email_sync_error,
     )

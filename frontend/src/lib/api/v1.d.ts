@@ -38,6 +38,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/account/email-change/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Email Change */
+        post: operations["start_email_change_v1_account_email_change_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/account/email-change/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Commit Email Change */
+        post: operations["commit_email_change_v1_account_email_change_commit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/platform/registrations": {
         parameters: {
             query?: never;
@@ -1466,6 +1500,20 @@ export interface components {
             /** Created At */
             created_at: string;
         };
+        /** EmailChangeIn */
+        EmailChangeIn: {
+            /** Email */
+            email: string;
+        };
+        /** EmailChangeOut */
+        EmailChangeOut: {
+            /** Status */
+            status: string;
+            /** Email */
+            email: string;
+            /** Change Id */
+            change_id?: string | null;
+        };
         /** EntitySettingsOut */
         EntitySettingsOut: {
             /** Entity Name */
@@ -1773,6 +1821,8 @@ export interface components {
             platform_admin: boolean;
             /** Privacy Operator */
             privacy_operator: boolean;
+            /** Email Sync Error */
+            email_sync_error?: string | null;
         };
         /** SignupCompleteIn */
         SignupCompleteIn: {
@@ -1918,6 +1968,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_email_change_v1_account_email_change_start_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailChangeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailChangeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    commit_email_change_v1_account_email_change_commit_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailChangeOut"];
                 };
             };
             /** @description Validation Error */

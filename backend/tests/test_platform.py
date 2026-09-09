@@ -44,3 +44,11 @@ def test_entity_change_routes_require_session() -> None:
 
 def test_company_campaigns_require_session() -> None:
     assert client.get(f"/v1/companies/{PROBE}/campaigns").status_code == 401
+
+
+def test_email_change_requires_session() -> None:
+    assert (
+        client.post("/v1/account/email-change/start", json={"email": "a@example.com"}).status_code
+        == 401
+    )
+    assert client.post("/v1/account/email-change/commit").status_code == 401

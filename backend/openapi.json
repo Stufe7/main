@@ -113,6 +113,114 @@
         }
       }
     },
+    "/v1/account/email-change/start": {
+      "post": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Start Email Change",
+        "operationId": "start_email_change_v1_account_email_change_start_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/account/email-change/commit": {
+      "post": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Commit Email Change",
+        "operationId": "commit_email_change_v1_account_email_change_commit_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailChangeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/platform/registrations": {
       "get": {
         "tags": [
@@ -6470,6 +6578,49 @@
         ],
         "title": "DomainRequestRow"
       },
+      "EmailChangeIn": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 3,
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "EmailChangeIn"
+      },
+      "EmailChangeOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "change_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "email"
+        ],
+        "title": "EmailChangeOut"
+      },
       "EntitySettingsOut": {
         "properties": {
           "entity_name": {
@@ -7424,6 +7575,17 @@
           "privacy_operator": {
             "type": "boolean",
             "title": "Privacy Operator"
+          },
+          "email_sync_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Sync Error"
           }
         },
         "type": "object",

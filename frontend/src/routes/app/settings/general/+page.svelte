@@ -165,7 +165,9 @@
 	<h1>General</h1>
 	<p>
 		Display name and legal name are shown here. Changes wait for Platform Super-Admin review. Invites
-		only succeed for Approved domains. The primary domain cannot be removed.
+		only succeed for Approved domains. The primary domain cannot be removed. After a new domain is
+		approved, each member changes their own email in Account, then you can transfer primary and retire
+		the old domain.
 	</p>
 	{#if error}
 		<p class="error">{error}</p>
