@@ -121,6 +121,7 @@ def accept_invitation(
         except Exception as exc:
             raise_pg(exc)
         entity_id = str(cur.fetchone()[0])
+        cur.execute("select public.app_seed_invite_timezone(%s, %s)", (user_id, entity_id))
         cur.execute(
             "select public.app_record_consent(%s, 'Terms', %s, 'Invitation')",
             (user_id, settings.terms_version),

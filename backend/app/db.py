@@ -21,3 +21,13 @@ def runtime_connection() -> Iterator[psycopg.Connection]:
         yield connection
     finally:
         connection.close()
+
+
+@contextmanager
+def job_connection() -> Iterator[psycopg.Connection]:
+    """Privileged scheduler path. Callers must not SET ROLE app_runtime."""
+    connection = psycopg.connect(require_database_url())
+    try:
+        yield connection
+    finally:
+        connection.close()

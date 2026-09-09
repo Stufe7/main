@@ -678,6 +678,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/jobs/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run Jobs */
+        post: operations["run_jobs_v1_jobs_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/settings/entity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Entity Settings */
+        get: operations["get_entity_settings_v1_settings_entity_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update General */
+        patch: operations["update_general_v1_settings_entity_patch"];
+        trace?: never;
+    };
+    "/v1/settings/digest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set Digest */
+        patch: operations["set_digest_v1_settings_digest_patch"];
+        trace?: never;
+    };
+    "/v1/privacy/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Requests */
+        get: operations["list_requests_v1_privacy_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/privacy/execute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Execute */
+        post: operations["execute_v1_privacy_execute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -1131,6 +1217,13 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** DigestIn */
+        DigestIn: {
+            /** Frequency */
+            frequency: string;
+            /** Timezone */
+            timezone: string;
+        };
         /** DomainPending */
         DomainPending: {
             /** Id */
@@ -1167,6 +1260,30 @@ export interface components {
             /** Created At */
             created_at: string;
         };
+        /** EntitySettingsOut */
+        EntitySettingsOut: {
+            /** Entity Name */
+            entity_name: string;
+            /** Country */
+            country: string;
+            /** Timezone */
+            timezone: string;
+            /** Digest Send Local Time */
+            digest_send_local_time: string;
+            /** Digest Frequency */
+            digest_frequency: string;
+        };
+        /** ExecuteIn */
+        ExecuteIn: {
+            /** Subject Type */
+            subject_type: string;
+            /** Subject Id */
+            subject_id: string;
+            /** Entity Id */
+            entity_id?: string | null;
+            /** Legal Basis */
+            legal_basis: string;
+        };
         /** FollowUpIn */
         FollowUpIn: {
             /**
@@ -1194,6 +1311,11 @@ export interface components {
             contact_id?: string | null;
             /** Campaign Id */
             campaign_id?: string | null;
+        };
+        /** GeneralIn */
+        GeneralIn: {
+            /** Digest Send Local Time */
+            digest_send_local_time: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1356,6 +1478,25 @@ export interface components {
              */
             action: string;
         };
+        /** PrivacyRequestOut */
+        PrivacyRequestOut: {
+            /** Id */
+            id: string;
+            /** Subject Type */
+            subject_type: string;
+            /** Subject Id */
+            subject_id: string;
+            /** Entity Id */
+            entity_id: string | null;
+            /** Status */
+            status: string;
+            /** Legal Basis */
+            legal_basis: string;
+            /** Requested At */
+            requested_at: string;
+            /** Executed At */
+            executed_at: string | null;
+        };
         /** RegistrationRow */
         RegistrationRow: {
             /** Id */
@@ -1406,6 +1547,8 @@ export interface components {
             pending_registration: boolean;
             /** Platform Admin */
             platform_admin: boolean;
+            /** Privacy Operator */
+            privacy_operator: boolean;
         };
         /** SignupCompleteIn */
         SignupCompleteIn: {
@@ -3235,6 +3378,215 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AckSelectedIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_jobs_v1_jobs_run_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-job-secret"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_entity_settings_v1_settings_entity_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntitySettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_general_v1_settings_entity_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GeneralIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_digest_v1_settings_digest_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DigestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_requests_v1_privacy_requests_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacyRequestOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    execute_v1_privacy_execute_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExecuteIn"];
             };
         };
         responses: {

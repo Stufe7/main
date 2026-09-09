@@ -63,6 +63,7 @@ export type SessionInfo = {
 	memberships: Membership[];
 	pending_registration: boolean;
 	platform_admin: boolean;
+	privacy_operator: boolean;
 };
 
 export type SignupComplete = {

@@ -47,6 +47,7 @@ class SessionOut(BaseModel):
     memberships: list[MembershipOut]
     pending_registration: bool
     platform_admin: bool
+    privacy_operator: bool
 
 
 def _runtime_claims(cur, claims: Claims) -> None:
@@ -71,8 +72,14 @@ def signup_complete(
     with runtime_connection() as connection, connection.cursor() as cur:
         _runtime_claims(cur, claims)
         cur.execute(
-            "select public.app_ensure_user(%s, %s, %s, %s)",
-            (user_id, email, body.first_name.strip(), body.last_name.strip()),
+            "select public.app_ensure_user(%s, %s, %s, %s, %s)",
+            (
+                user_id,
+                email,
+                body.first_name.strip(),
+                body.last_name.strip(),
+                body.timezone,
+            ),
         )
         cur.execute(
             "select public.app_record_consent(%s, 'Terms', %s, 'Signup')",
@@ -178,10 +185,13 @@ def session(
         pending = bool(cur.fetchone()[0])
         cur.execute("select public.app_is_platform_admin(%s)", (user_id,))
         platform_admin = bool(cur.fetchone()[0])
+        cur.execute("select public.app_is_privacy_operator(%s)", (user_id,))
+        privacy_operator = bool(cur.fetchone()[0])
     return SessionOut(
         user_id=user_id,
         email=claims.get("email"),
         memberships=memberships,
         pending_registration=pending,
         platform_admin=platform_admin,
+        privacy_operator=privacy_operator,
     )

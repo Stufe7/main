@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     mail_from_noreply: str = "noreply@stufe7.com"
     mail_admin_to: str = "admin@stufe7.com"
     public_app_url: str = "https://www.stufe7.com"
+    job_secret: str = ""
+    supabase_service_role_key: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:

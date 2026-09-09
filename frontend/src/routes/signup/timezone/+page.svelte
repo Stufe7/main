@@ -68,10 +68,11 @@
 	<form class="card" onsubmit={submit}>
 		<h1>Your timezone</h1>
 		<p>
-			This becomes the company working calendar. It is suggested from your device
+			This is your working calendar for Today, Overdue, This Week, and the Action Digest. It is
+			suggested from your device
 			{country ? ` and country ${country}` : ''}.
 			{#if countryNeedsExplicitZone(country)}
-				This country has more than one timezone — pick the one the company uses.
+				This country has more than one timezone — pick the one you work in.
 			{/if}
 		</p>
 		{#if error}

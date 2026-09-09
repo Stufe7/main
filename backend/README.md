@@ -13,3 +13,9 @@ Export the OpenAPI contract (committed):
 ```bash
 .venv/bin/python scripts/export_openapi.py
 ```
+
+Hourly jobs (digest, campaign close, deny-list, weekly stat, retention) also run through `POST /v1/jobs/run` with header `X-Job-Secret`. Local helper:
+
+```bash
+.venv/bin/python scripts/run_jobs.py
+```

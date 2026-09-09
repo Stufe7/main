@@ -3825,6 +3825,394 @@
         }
       }
     },
+    "/v1/jobs/run": {
+      "post": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Run Jobs",
+        "operationId": "run_jobs_v1_jobs_run_post",
+        "parameters": [
+          {
+            "name": "x-job-secret",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Job-Secret"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Run Jobs V1 Jobs Run Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/settings/entity": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Get Entity Settings",
+        "operationId": "get_entity_settings_v1_settings_entity_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "x-entity-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Entity-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntitySettingsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Update General",
+        "operationId": "update_general_v1_settings_entity_patch",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "x-entity-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Entity-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeneralIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Update General V1 Settings Entity Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/settings/digest": {
+      "patch": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Set Digest",
+        "operationId": "set_digest_v1_settings_digest_patch",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "x-entity-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Entity-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DigestIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Set Digest V1 Settings Digest Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/privacy/requests": {
+      "get": {
+        "tags": [
+          "privacy"
+        ],
+        "summary": "List Requests",
+        "operationId": "list_requests_v1_privacy_requests_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrivacyRequestOut"
+                  },
+                  "title": "Response List Requests V1 Privacy Requests Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/privacy/execute": {
+      "post": {
+        "tags": [
+          "privacy"
+        ],
+        "summary": "Execute",
+        "operationId": "execute_v1_privacy_execute_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Execute V1 Privacy Execute Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -5197,6 +5585,26 @@
         "type": "object",
         "title": "DeactivateIn"
       },
+      "DigestIn": {
+        "properties": {
+          "frequency": {
+            "type": "string",
+            "pattern": "^(Off|Daily|Weekly|Monthly)$",
+            "title": "Frequency"
+          },
+          "timezone": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Timezone"
+          }
+        },
+        "type": "object",
+        "required": [
+          "frequency",
+          "timezone"
+        ],
+        "title": "DigestIn"
+      },
       "DomainPending": {
         "properties": {
           "id": {
@@ -5298,6 +5706,75 @@
         ],
         "title": "DomainRequestRow"
       },
+      "EntitySettingsOut": {
+        "properties": {
+          "entity_name": {
+            "type": "string",
+            "title": "Entity Name"
+          },
+          "country": {
+            "type": "string",
+            "title": "Country"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "digest_send_local_time": {
+            "type": "string",
+            "title": "Digest Send Local Time"
+          },
+          "digest_frequency": {
+            "type": "string",
+            "title": "Digest Frequency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_name",
+          "country",
+          "timezone",
+          "digest_send_local_time",
+          "digest_frequency"
+        ],
+        "title": "EntitySettingsOut"
+      },
+      "ExecuteIn": {
+        "properties": {
+          "subject_type": {
+            "type": "string",
+            "pattern": "^(CONTACT|USER|REGISTRATION_REQUEST)$",
+            "title": "Subject Type"
+          },
+          "subject_id": {
+            "type": "string",
+            "title": "Subject Id"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "legal_basis": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Legal Basis"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject_type",
+          "subject_id",
+          "legal_basis"
+        ],
+        "title": "ExecuteIn"
+      },
       "FollowUpIn": {
         "properties": {
           "action_type": {
@@ -5371,6 +5848,20 @@
           "due_date"
         ],
         "title": "FollowUpIn"
+      },
+      "GeneralIn": {
+        "properties": {
+          "digest_send_local_time": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):00:00$",
+            "title": "Digest Send Local Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "digest_send_local_time"
+        ],
+        "title": "GeneralIn"
       },
       "HTTPValidationError": {
         "properties": {
@@ -5896,6 +6387,68 @@
         ],
         "title": "PreviewRow"
       },
+      "PrivacyRequestOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "subject_type": {
+            "type": "string",
+            "title": "Subject Type"
+          },
+          "subject_id": {
+            "type": "string",
+            "title": "Subject Id"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "legal_basis": {
+            "type": "string",
+            "title": "Legal Basis"
+          },
+          "requested_at": {
+            "type": "string",
+            "title": "Requested At"
+          },
+          "executed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Executed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "subject_type",
+          "subject_id",
+          "entity_id",
+          "status",
+          "legal_basis",
+          "requested_at",
+          "executed_at"
+        ],
+        "title": "PrivacyRequestOut"
+      },
       "RegistrationRow": {
         "properties": {
           "id": {
@@ -6040,6 +6593,10 @@
           "platform_admin": {
             "type": "boolean",
             "title": "Platform Admin"
+          },
+          "privacy_operator": {
+            "type": "boolean",
+            "title": "Privacy Operator"
           }
         },
         "type": "object",
@@ -6048,7 +6605,8 @@
           "email",
           "memberships",
           "pending_registration",
-          "platform_admin"
+          "platform_admin",
+          "privacy_operator"
         ],
         "title": "SessionOut"
       },

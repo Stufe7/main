@@ -175,13 +175,13 @@ _ACTN_SELECT = """
 """
 
 
-def _entity_today(cur, entity_id: str) -> tuple[str, date, date]:
+def _viewer_today(cur, user_id: str, entity_id: str) -> tuple[str, date, date]:
     cur.execute(
-        "select reference_timezone from public.entity where id = %s",
-        (entity_id,),
+        "select public.app_user_timezone(%s, %s)",
+        (user_id, entity_id),
     )
     row = cur.fetchone()
-    tz_name = row[0] if row else "UTC"
+    tz_name = row[0] if row and row[0] else "UTC"
     today = datetime.now(ZoneInfo(tz_name)).date()
     week_end = today + timedelta(days=(6 - today.weekday()))
     return tz_name, today, week_end
@@ -411,7 +411,7 @@ def list_actions(
 ) -> list[ActionOut]:
     with runtime_connection() as connection, connection.cursor() as cur:
         bind_request(cur, claims, entity_id)
-        _tz, today, week_end = _entity_today(cur, entity_id)
+        _tz, today, week_end = _viewer_today(cur, user_id, entity_id)
         params: list[object] = [entity_id]
         where = "x.entity_id = %s and x.status = 'Open'"
         if company_id:
@@ -618,7 +618,7 @@ def home(
     )
     with runtime_connection() as connection, connection.cursor() as cur:
         bind_request(cur, claims, entity_id)
-        tz_name, today, _week_end = _entity_today(cur, entity_id)
+        tz_name, today, _week_end = _viewer_today(cur, user_id, entity_id)
         cur.execute(
             """
             select count(*) from public.company
