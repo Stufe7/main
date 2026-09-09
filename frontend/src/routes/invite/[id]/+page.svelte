@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
 	import { setActiveEntityId } from '$lib/entity';
 
-	const invitationId = $derived($page.params.id);
+	const invitationId = $derived(page.params.id);
 	let error = $state('');
 	let busy = $state(false);
 

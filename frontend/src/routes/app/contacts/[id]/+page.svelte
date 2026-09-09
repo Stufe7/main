@@ -1,16 +1,18 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import {
 		api,
 		type ActionItem,
 		type Activity,
-		type Contact
+		type Contact,
+		type SessionInfo
 	} from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
+	import { ensureActiveEntity } from '$lib/entity';
 
-	const contactId = $derived($page.params.id);
+	const contactId = $derived(page.params.id);
 	let row = $state<Contact | null>(null);
 	let activities = $state<Activity[]>([]);
 	let actions = $state<ActionItem[]>([]);
@@ -30,6 +32,11 @@
 	onMount(async () => {
 		if (!(await requireSession())) {
 			await goto('/');
+			return;
+		}
+		const session = await api<SessionInfo>('/v1/session');
+		if (!ensureActiveEntity(session.memberships)) {
+			error = 'No entity membership.';
 			return;
 		}
 		try {

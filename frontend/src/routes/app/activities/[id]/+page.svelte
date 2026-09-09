@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
-	import { api } from '$lib/api/client';
+	import { page } from '$app/state';
+	import { api, type SessionInfo } from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
+	import { ensureActiveEntity } from '$lib/entity';
 
-	const activityId = $derived($page.params.id);
+	const activityId = $derived(page.params.id);
 	let activity = $state<Record<string, string | null> | null>(null);
 	let revisions = $state<Record<string, string | number | null>[]>([]);
 	let error = $state('');
@@ -18,6 +19,8 @@
 			await goto('/');
 			return;
 		}
+		const session = await api<SessionInfo>('/v1/session');
+		ensureActiveEntity(session.memberships);
 		try {
 			const data = await api<{
 				activity: Record<string, string | null>;

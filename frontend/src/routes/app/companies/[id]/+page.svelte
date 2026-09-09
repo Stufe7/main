@@ -1,11 +1,20 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
-	import { api, type ActionItem, type Activity, type Company, type Contact, type Member } from '$lib/api/client';
+	import { page } from '$app/state';
+	import {
+		api,
+		type ActionItem,
+		type Activity,
+		type Company,
+		type Contact,
+		type Member,
+		type SessionInfo
+	} from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
+	import { ensureActiveEntity } from '$lib/entity';
 
-	const companyId = $derived($page.params.id);
+	const companyId = $derived(page.params.id);
 	let row = $state<Company | null>(null);
 	let members = $state<Member[]>([]);
 	let contacts = $state<Contact[]>([]);
@@ -13,6 +22,7 @@
 	let actions = $state<ActionItem[]>([]);
 	let error = $state('');
 	let busy = $state(false);
+	let loading = $state(true);
 	let subject = $state('');
 	let nextDue = $state('');
 	let nextDesc = $state('');
@@ -23,15 +33,31 @@
 			return;
 		}
 		try {
-			[row, members, contacts, activities, actions] = await Promise.all([
-				api<Company>(`/v1/companies/${companyId}`),
-				api<Member[]>('/v1/members'),
-				api<Contact[]>(`/v1/contacts?company_id=${companyId}`),
-				api<Activity[]>(`/v1/activities?company_id=${companyId}`),
-				api<ActionItem[]>(`/v1/actions?company_id=${companyId}&horizon=open&scope=team`)
-			]);
+			const session = await api<SessionInfo>('/v1/session');
+			if (!ensureActiveEntity(session.memberships)) {
+				error = 'No entity membership.';
+				return;
+			}
+			const id = page.params.id;
+			if (!id) {
+				error = 'Missing company.';
+				return;
+			}
+			row = await api<Company>(`/v1/companies/${id}`);
+			try {
+				[members, contacts, activities, actions] = await Promise.all([
+					api<Member[]>('/v1/members'),
+					api<Contact[]>(`/v1/contacts?company_id=${id}`),
+					api<Activity[]>(`/v1/activities?company_id=${id}`),
+					api<ActionItem[]>(`/v1/actions?company_id=${id}&horizon=open&scope=team`)
+				]);
+			} catch (err) {
+				error = err instanceof Error ? err.message : 'Could not load company extras.';
+			}
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not load company.';
+		} finally {
+			loading = false;
 		}
 	});
 
@@ -105,6 +131,9 @@
 
 <section class="card">
 	<p><a href="/app/companies">← Companies</a></p>
+	{#if loading}
+		<p>Loading…</p>
+	{/if}
 	{#if error}
 		<p class="error">{error}</p>
 	{/if}
