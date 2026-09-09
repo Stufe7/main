@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { COMPANY_EMAIL_REJECT, formatSignInOtpError } from './errors.ts';
+import { COMPANY_EMAIL_REJECT, formatSignInOtpError, OTP_RATE_LIMIT } from './errors.ts';
 
 describe('formatSignInOtpError', () => {
 	it('keeps the hook company-email message', () => {
@@ -14,6 +14,13 @@ describe('formatSignInOtpError', () => {
 		assert.equal(
 			formatSignInOtpError({ status: 400, message: 'Invalid payload sent to hook' }),
 			`400 — ${COMPANY_EMAIL_REJECT}`
+		);
+	});
+
+	it('maps Auth rate limits to a wait message', () => {
+		assert.equal(
+			formatSignInOtpError({ status: 429, code: 'over_email_send_rate_limit', message: 'rate' }),
+			`429 — over_email_send_rate_limit — ${OTP_RATE_LIMIT}`
 		);
 	});
 });

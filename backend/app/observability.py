@@ -41,8 +41,23 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
             "correlation_id": correlation_id,
         }
         logger.info("%s %s", request.method, request.url.path, extra=extra)
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        except Exception:
+            logger.exception("uncaught %s %s", request.method, request.url.path, extra=extra)
+            raise
         response.headers["x-request-id"] = correlation_id
         response.headers["x-app-version"] = settings.app_version
         response.headers["x-app-env"] = settings.app_env
+        _apply_security_headers(request, response)
         return response
+
+
+def _apply_security_headers(request: Request, response: Response) -> None:
+    response.headers["x-content-type-options"] = "nosniff"
+    response.headers["x-frame-options"] = "DENY"
+    response.headers["referrer-policy"] = "strict-origin-when-cross-origin"
+    response.headers["permissions-policy"] = "camera=(), microphone=(), geolocation=()"
+    forwarded = (request.headers.get("x-forwarded-proto") or request.url.scheme).lower()
+    if forwarded == "https":
+        response.headers["strict-transport-security"] = "max-age=63072000; includeSubDomains"

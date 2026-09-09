@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     app_env: str = "local"
-    app_version: str = "0.0.0-phase2"
+    app_version: str = "0.0.0-phase8"
     cors_origins: str = "http://localhost:5173"
     database_url: str = ""
     supabase_jwt_secret: str = ""

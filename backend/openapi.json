@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Stufe7 API",
-    "version": "0.0.0-phase2"
+    "version": "0.0.0-phase8"
   },
   "paths": {
     "/v1/signup/complete": {
@@ -4559,6 +4559,57 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Run Jobs V1 Jobs Run Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/jobs/status": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Job Status",
+        "operationId": "job_status_v1_jobs_status_get",
+        "parameters": [
+          {
+            "name": "x-job-secret",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Job-Secret"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Job Status V1 Jobs Status Get"
                 }
               }
             }

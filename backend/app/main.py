@@ -17,6 +17,7 @@ from app.phase1a import prove_kernel
 from app.phase1b import prove_schema
 from app.prefs import router as prefs_router
 from app.privacy import router as privacy_router
+from app.ratelimit import RateLimitMiddleware
 from app.settings import settings
 from app.signup import router as signup_router
 from app.spike1 import prove_auth_uid
@@ -31,6 +32,7 @@ app = FastAPI(
 )
 
 app.add_middleware(CorrelationIdMiddleware)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,

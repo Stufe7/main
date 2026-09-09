@@ -7,9 +7,10 @@ from typing import Annotated, Any
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException
+from psycopg.types.json import Json
 
 from app.db import job_connection
-from app.mail import send_updates_mail
+from app.mail import send_admin_alert, send_updates_mail
 from app.settings import settings
 
 log = logging.getLogger(__name__)
@@ -281,17 +282,93 @@ def _run_retention() -> dict[str, Any]:
     return payload
 
 
+def _job_status(name: str, payload: Any) -> str:
+    if not isinstance(payload, dict):
+        return "ok"
+    if payload.get("status") in {"FailedKeptLastGood", "failed"}:
+        return "failed"
+    if name == "digest" and int(payload.get("failed") or 0) > 0:
+        return "partial" if int(payload.get("sent") or 0) > 0 else "failed"
+    return "ok"
+
+
+def _record_job(name: str, started: datetime, payload: Any, status: str) -> None:
+    detail = payload if isinstance(payload, dict) else {"result": payload}
+    try:
+        with job_connection() as connection, connection.cursor() as cur:
+            cur.execute(
+                "select public.app_job_record_run(%s, %s, %s, %s)",
+                (name, status, Json(detail), started),
+            )
+            connection.commit()
+    except Exception:
+        log.exception("job_run record failed for %s", name)
+
+
+def _run_named(name: str, runner) -> Any:
+    started = datetime.now(UTC)
+    try:
+        payload = runner()
+        status = _job_status(name, payload)
+        _record_job(name, started, payload, status)
+        if status != "ok":
+            send_admin_alert(
+                f"Stufe7 job {name} {status}",
+                f"{name} finished {status} at {datetime.now(UTC).isoformat()}\n{payload}",
+            )
+        return payload
+    except Exception as exc:
+        log.exception("job %s failed", name)
+        payload = {"status": "failed", "error": str(exc)[:300]}
+        _record_job(name, started, payload, "failed")
+        send_admin_alert(
+            f"Stufe7 job {name} failed",
+            f"{name} raised at {datetime.now(UTC).isoformat()}\n{exc}",
+        )
+        return payload
+
+
 def run_all_jobs() -> dict[str, Any]:
     return {
         "ran_at": datetime.now(UTC).isoformat(),
-        "campaigns": _run_campaigns(),
-        "digest": _run_digests(),
-        "weekly_stat": _run_weekly_stat(),
-        "deny_list": _run_deny_list(),
-        "retention": _run_retention(),
+        "campaigns": _run_named("campaigns", _run_campaigns),
+        "digest": _run_named("digest", _run_digests),
+        "weekly_stat": _run_named("weekly_stat", _run_weekly_stat),
+        "deny_list": _run_named("deny_list", _run_deny_list),
+        "retention": _run_named("retention", _run_retention),
     }
 
 
 @router.post("/run")
 def run_jobs(_secret: Annotated[str, Depends(require_job_secret)]) -> dict[str, Any]:
     return run_all_jobs()
+
+
+@router.get("/status")
+def job_status(_secret: Annotated[str, Depends(require_job_secret)]) -> dict[str, Any]:
+    stale_after = 90
+    with job_connection() as connection, connection.cursor() as cur:
+        cur.execute(
+            """
+            select job_name, status, detail, started_at, finished_at,
+                   extract(epoch from (now() - finished_at)) / 60 as age_minutes
+            from public.job_run
+            order by job_name
+            """
+        )
+        rows = cur.fetchall()
+    jobs = [
+        {
+            "job_name": row[0],
+            "status": row[1],
+            "detail": row[2],
+            "started_at": row[3].isoformat() if row[3] else None,
+            "finished_at": row[4].isoformat() if row[4] else None,
+            "age_minutes": float(row[5]) if row[5] is not None else None,
+        }
+        for row in rows
+    ]
+    stale = (not jobs) or any(
+        (item["age_minutes"] or 0) > stale_after or item["status"] == "failed" for item in jobs
+    )
+    return {"stale": stale, "stale_after_minutes": stale_after, "jobs": jobs}

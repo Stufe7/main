@@ -13,3 +13,5 @@ def test_health() -> None:
     assert "version" in body
     assert response.headers.get("x-request-id")
     assert response.headers.get("x-app-env")
+    assert response.headers.get("x-content-type-options") == "nosniff"
+    assert response.headers.get("x-frame-options") == "DENY"

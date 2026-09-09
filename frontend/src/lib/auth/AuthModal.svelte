@@ -29,8 +29,10 @@
 	let otp = $state('');
 	let otpEmail = $state('');
 	let otpCreateUser = $state(false);
+	let lastOtpAt = $state(0);
 
 	const configured = isSupabaseConfigured();
+	const OTP_COOLDOWN_MS = 60_000;
 
 	function close() {
 		open = false;
@@ -68,6 +70,10 @@
 			await continueAfterVerify();
 			return;
 		}
+		if (Date.now() - lastOtpAt < OTP_COOLDOWN_MS) {
+			error = 'Wait a minute before requesting another code.';
+			return;
+		}
 		busy = true;
 		error = '';
 		info = '';
@@ -83,6 +89,7 @@
 			console.error('signInWithOtp failed', otpError);
 			return;
 		}
+		lastOtpAt = Date.now();
 		otpEmail = trimmed;
 		otpCreateUser = createUser;
 		step = 'otp';
@@ -250,6 +257,14 @@
 						/>
 					</label>
 					<button class="primary" type="submit" disabled={busy}>Continue</button>
+					<button
+						class="link"
+						type="button"
+						disabled={busy}
+						onclick={() => sendOtp(otpEmail, otpCreateUser)}
+					>
+						Resend code
+					</button>
 					<button class="link" type="button" onclick={() => (step = 'form')}>Use a different email</button>
 				</form>
 			{/if}
