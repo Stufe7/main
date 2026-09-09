@@ -3,20 +3,57 @@
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api/client';
-	import { requireSession } from '$lib/auth/session.svelte';
+	import AuthModal from '$lib/auth/AuthModal.svelte';
+	import { auth, requireSession, signOut } from '$lib/auth/session.svelte';
 	import { setActiveEntityId } from '$lib/entity';
 
+	type Preview = {
+		email: string;
+		role: string;
+		status: string;
+		entity_name: string;
+		expires_at: string;
+	};
+
 	const invitationId = $derived(page.params.id);
+	const invitePath = $derived(`/invite/${invitationId}`);
+	const matching = $derived(
+		Boolean(
+			auth.ready &&
+				auth.email &&
+				invite &&
+				auth.email.toLowerCase() === invite.email.toLowerCase()
+		)
+	);
+
+	let invite = $state<Preview | null>(null);
 	let error = $state('');
 	let busy = $state(false);
+	let authOpen = $state(false);
+	let authTab = $state<'login' | 'signup'>('login');
+	let ready = $state(false);
 
 	onMount(async () => {
-		if (!(await requireSession())) {
-			error = 'Log in with the invited work email, then open this invitation link again.';
+		try {
+			invite = await api<Preview>(`/v1/invitations/${invitationId}`);
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Invitation is not valid or has expired.';
+			ready = true;
+			return;
 		}
+		await requireSession();
+		if (auth.email && auth.email.toLowerCase() !== invite.email.toLowerCase()) {
+			await signOut();
+		}
+		authOpen = !auth.email;
+		ready = true;
 	});
 
 	async function accept() {
+		if (!matching) {
+			authOpen = true;
+			return;
+		}
 		busy = true;
 		error = '';
 		try {
@@ -39,14 +76,37 @@
 
 <section class="card">
 	<h1>Join workspace</h1>
-	{#if error}
-		<p class="error">{error}</p>
-		<p><a href="/">Log in</a></p>
+	{#if !ready}
+		<p>Loading invitation…</p>
+	{:else if invite}
+		<p>
+			{invite.email} is invited to {invite.entity_name} as {invite.role}. Sign in with that email,
+			then accept. A one-time code is emailed.
+		</p>
+		{#if error}
+			<p class="error">{error}</p>
+		{/if}
+		{#if matching}
+			<button type="button" disabled={busy} onclick={accept}>Accept invitation</button>
+		{:else}
+			<button type="button" onclick={() => (authOpen = true)}>Email me a sign-in code</button>
+		{/if}
 	{:else}
-		<p>Continue to join the entity you were invited to.</p>
-		<button type="button" disabled={busy} onclick={accept}>Accept invitation</button>
+		<p class="error">{error}</p>
+		<p><a href="/">Back to Stufe7</a></p>
 	{/if}
 </section>
+
+{#if invite}
+	<AuthModal
+		bind:open={authOpen}
+		bind:tab={authTab}
+		allowSignup={false}
+		nextPath={invitePath}
+		dismissible={true}
+		allowedEmail={invite.email}
+	/>
+{/if}
 
 <style>
 	.card {
@@ -72,5 +132,8 @@
 		color: #8a1f1f;
 		padding: 0.65rem;
 		border-radius: 0.6rem;
+	}
+	a {
+		color: #20265e;
 	}
 </style>

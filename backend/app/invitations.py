@@ -9,6 +9,7 @@ from app.authn import Claims, bearer_claims, require_user_id
 from app.db import runtime_connection
 from app.mail import send_updates_mail
 from app.settings import settings
+from app.spike1 import _assume_runtime
 from app.tenant import bind_request, raise_pg, require_entity_id
 
 router = APIRouter(prefix="/v1", tags=["invitations"])
@@ -24,6 +25,14 @@ class InviteOut(BaseModel):
     email: str
     role: str
     status: str
+    expires_at: str
+
+
+class InvitePreview(BaseModel):
+    email: str
+    role: str
+    status: str
+    entity_name: str
     expires_at: str
 
 
@@ -55,6 +64,29 @@ def list_invitations(
         )
         for row in rows
     ]
+
+
+@router.get("/invitations/{invitation_id}", response_model=InvitePreview)
+def invitation_preview(invitation_id: str) -> InvitePreview:
+    with runtime_connection() as connection, connection.cursor() as cur:
+        _assume_runtime(cur)
+        cur.execute(
+            """
+            select email, role, status, entity_name, expires_at
+            from public.app_invitation_preview(%s)
+            """,
+            (invitation_id,),
+        )
+        row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Invitation is not valid or has expired")
+    return InvitePreview(
+        email=row[0],
+        role=row[1],
+        status=row[2],
+        entity_name=row[3],
+        expires_at=row[4].isoformat(),
+    )
 
 
 @router.post("/invitations", response_model=InviteOut)
