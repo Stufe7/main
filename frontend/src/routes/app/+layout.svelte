@@ -53,10 +53,12 @@
 			<a href="/app">Home</a>
 			<a href="/app/companies">Companies</a>
 			<a href="/app/contacts">Contacts</a>
+			<a href="/app/campaigns">Campaigns</a>
 			<a href="/app/activities">Activities</a>
 			<a href="/app/invite">Invite</a>
 			{#if currentRole === 'Entity Admin'}
 				<a href="/app/settings/users">Users</a>
+				<a href="/app/settings/import">Import</a>
 			{/if}
 			<a href="/app/settings/domains">Domains</a>
 			<a href="/app/entities/new">New entity</a>

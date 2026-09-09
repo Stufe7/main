@@ -1,17 +1,19 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.observability import CorrelationIdMiddleware, configure_logging
-from app.settings import settings
 from app.approvals import router as approvals_router
+from app.campaigns import router as campaigns_router
 from app.companies import router as companies_router
 from app.contacts import router as contacts_router
 from app.crm import router as crm_router
 from app.domains import router as domains_router
+from app.imports import router as imports_router
 from app.invitations import router as invitations_router
 from app.members import router as members_router
+from app.observability import CorrelationIdMiddleware, configure_logging
 from app.phase1a import prove_kernel
 from app.phase1b import prove_schema
+from app.settings import settings
 from app.signup import router as signup_router
 from app.spike1 import prove_auth_uid
 
@@ -39,6 +41,8 @@ app.include_router(members_router)
 app.include_router(domains_router)
 app.include_router(companies_router)
 app.include_router(contacts_router)
+app.include_router(campaigns_router)
+app.include_router(imports_router)
 app.include_router(crm_router)
 
 

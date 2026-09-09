@@ -93,6 +93,7 @@ def list_companies(
     entity_id: Annotated[str, Depends(require_entity_id)],
     q: str = "",
     record_state: str = Query(default="Active"),
+    country: str = "",
 ) -> list[CompanyOut]:
     with runtime_connection() as connection, connection.cursor() as cur:
         bind_request(cur, claims, entity_id)
@@ -104,6 +105,9 @@ def list_companies(
         if q.strip():
             where += " and company_name ilike %s"
             params.append(f"%{q.strip()}%")
+        if country.strip():
+            where += " and country = %s"
+            params.append(country.strip().upper())
         cur.execute(
             f"""
             select id, company_name, legal_name, status, record_state, country,

@@ -25,6 +25,7 @@ class FollowUpIn(BaseModel):
     priority: str = "Normal"
     owner_user_id: str | None = None
     contact_id: str | None = None
+    campaign_id: str | None = None
 
 
 class ActivityIn(BaseModel):
@@ -36,6 +37,7 @@ class ActivityIn(BaseModel):
     description: str | None = None
     outcome: str | None = None
     follow_up: FollowUpIn | None = None
+    campaign_id: str | None = None
 
 
 class ActivityOut(BaseModel):
@@ -49,6 +51,7 @@ class ActivityOut(BaseModel):
     description: str | None
     outcome: str | None
     source_action_id: str | None
+    campaign_id: str | None = None
 
 
 class RevisionOut(BaseModel):
@@ -73,6 +76,7 @@ class ActionOut(BaseModel):
     priority: str
     status: str
     source_activity_id: str | None
+    campaign_id: str | None = None
 
 
 class ActionIn(BaseModel):
@@ -84,6 +88,7 @@ class ActionIn(BaseModel):
     due_date: date
     due_time: str | None = None
     priority: str = "Normal"
+    campaign_id: str | None = None
 
 
 class CompleteIn(BaseModel):
@@ -130,6 +135,7 @@ def _activity_row(row: tuple) -> ActivityOut:
         description=row[7],
         outcome=row[8],
         source_action_id=str(row[9]) if row[9] else None,
+        campaign_id=str(row[10]) if len(row) > 10 and row[10] else None,
     )
 
 
@@ -148,12 +154,14 @@ def _action_row(row: tuple) -> ActionOut:
         priority=row[9],
         status=row[10],
         source_activity_id=str(row[11]) if row[11] else None,
+        campaign_id=str(row[12]) if len(row) > 12 and row[12] else None,
     )
 
 
 _ACT_SELECT = """
     select a.id, a.company_id, co.company_name, a.contact_id, a.activity_type,
-           a.activity_date, a.subject, a.description, a.outcome, a.source_action_id
+           a.activity_date, a.subject, a.description, a.outcome, a.source_action_id,
+           a.campaign_id
     from public.activity a
     join public.company co on co.id = a.company_id and co.entity_id = a.entity_id
 """
@@ -161,7 +169,7 @@ _ACT_SELECT = """
 _ACTN_SELECT = """
     select x.id, x.company_id, co.company_name, x.contact_id, x.owner_user_id,
            x.action_type, x.description, x.due_date, x.due_time, x.priority,
-           x.status, x.source_activity_id
+           x.status, x.source_activity_id, x.campaign_id
     from public.action x
     join public.company co on co.id = x.company_id and co.entity_id = x.entity_id
 """
@@ -188,20 +196,22 @@ def _insert_follow_up(
     follow: FollowUpIn,
     source_activity_id: str,
     default_contact: str | None,
+    campaign_id: str | None = None,
 ) -> None:
     cur.execute(
         """
         insert into public.action (
-          entity_id, company_id, contact_id, owner_user_id, action_type, description,
-          due_date, due_time, priority, status, source_activity_id,
+          entity_id, company_id, contact_id, campaign_id, owner_user_id, action_type,
+          description, due_date, due_time, priority, status, source_activity_id,
           created_by_user_id, updated_by_user_id
         )
-        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'Open', %s, %s, %s)
+        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Open', %s, %s, %s)
         """,
         (
             entity_id,
             company_id,
             follow.contact_id or default_contact,
+            follow.campaign_id or campaign_id,
             follow.owner_user_id or user_id,
             follow.action_type,
             follow.description.strip(),
@@ -222,6 +232,7 @@ def list_activities(
     entity_id: Annotated[str, Depends(require_entity_id)],
     company_id: str | None = None,
     contact_id: str | None = None,
+    campaign_id: str | None = None,
 ) -> list[ActivityOut]:
     with runtime_connection() as connection, connection.cursor() as cur:
         bind_request(cur, claims, entity_id)
@@ -233,6 +244,9 @@ def list_activities(
         if contact_id:
             where += " and a.contact_id = %s"
             params.append(contact_id)
+        if campaign_id:
+            where += " and a.campaign_id = %s"
+            params.append(campaign_id)
         cur.execute(
             f"{_ACT_SELECT} where {where} order by a.activity_date desc, a.created_at desc limit 200",
             params,
@@ -254,16 +268,18 @@ def create_activity(
             cur.execute(
                 """
                 insert into public.activity (
-                  entity_id, company_id, contact_id, activity_type, activity_date,
-                  subject, description, outcome, created_by_user_id, updated_by_user_id
+                  entity_id, company_id, contact_id, campaign_id, activity_type,
+                  activity_date, subject, description, outcome,
+                  created_by_user_id, updated_by_user_id
                 )
-                values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 returning id
                 """,
                 (
                     entity_id,
                     body.company_id,
                     body.contact_id,
+                    body.campaign_id,
                     body.activity_type,
                     when,
                     body.subject.strip(),
@@ -283,6 +299,7 @@ def create_activity(
                     follow=body.follow_up,
                     source_activity_id=activity_id,
                     default_contact=body.contact_id,
+                    campaign_id=body.campaign_id,
                 )
             cur.execute(
                 f"{_ACT_SELECT} where a.id = %s and a.entity_id = %s",
@@ -388,6 +405,7 @@ def list_actions(
     entity_id: Annotated[str, Depends(require_entity_id)],
     company_id: str | None = None,
     contact_id: str | None = None,
+    campaign_id: str | None = None,
     horizon: str = Query(default="open"),
     scope: str = Query(default="my"),
 ) -> list[ActionOut]:
@@ -402,6 +420,9 @@ def list_actions(
         if contact_id:
             where += " and x.contact_id = %s"
             params.append(contact_id)
+        if campaign_id:
+            where += " and x.campaign_id = %s"
+            params.append(campaign_id)
         if scope == "my":
             where += " and x.owner_user_id = %s"
             params.append(user_id)
@@ -441,17 +462,18 @@ def create_action(
             cur.execute(
                 """
                 insert into public.action (
-                  entity_id, company_id, contact_id, owner_user_id, action_type,
+                  entity_id, company_id, contact_id, campaign_id, owner_user_id, action_type,
                   description, due_date, due_time, priority, status,
                   created_by_user_id, updated_by_user_id
                 )
-                values (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'Open', %s, %s)
+                values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Open', %s, %s)
                 returning id
                 """,
                 (
                     entity_id,
                     body.company_id,
                     body.contact_id,
+                    body.campaign_id,
                     body.owner_user_id or user_id,
                     body.action_type,
                     body.description.strip(),
@@ -483,7 +505,7 @@ def complete_action(
         bind_request(cur, claims, entity_id)
         cur.execute(
             """
-            select company_id, contact_id, status
+            select company_id, contact_id, status, campaign_id
             from public.action
             where id = %s and entity_id = %s
             """,
@@ -495,21 +517,23 @@ def complete_action(
         if current[2] != "Open":
             raise HTTPException(status_code=400, detail="Action is not open")
         company_id, contact_id = str(current[0]), str(current[1]) if current[1] else None
+        campaign_id = str(current[3]) if current[3] else None
         try:
             cur.execute(
                 """
                 insert into public.activity (
-                  entity_id, company_id, contact_id, activity_type, activity_date,
+                  entity_id, company_id, contact_id, campaign_id, activity_type, activity_date,
                   subject, description, outcome, source_action_id,
                   created_by_user_id, updated_by_user_id
                 )
-                values (%s, %s, %s, %s, now(), %s, %s, %s, %s, %s, %s)
+                values (%s, %s, %s, %s, %s, now(), %s, %s, %s, %s, %s, %s)
                 returning id
                 """,
                 (
                     entity_id,
                     company_id,
                     contact_id,
+                    campaign_id,
                     body.activity_type,
                     body.subject.strip(),
                     body.description,
@@ -538,6 +562,7 @@ def complete_action(
                     follow=body.follow_up,
                     source_activity_id=activity_id,
                     default_contact=contact_id,
+                    campaign_id=campaign_id,
                 )
             cur.execute(
                 f"{_ACT_SELECT} where a.id = %s and a.entity_id = %s",

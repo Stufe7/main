@@ -400,6 +400,128 @@ export interface paths {
         patch: operations["patch_contact_v1_contacts__contact_id__patch"];
         trace?: never;
     };
+    "/v1/campaigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Campaigns */
+        get: operations["list_campaigns_v1_campaigns_get"];
+        put?: never;
+        /** Create Campaign */
+        post: operations["create_campaign_v1_campaigns_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/campaigns/{campaign_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Campaign */
+        get: operations["get_campaign_v1_campaigns__campaign_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Campaign */
+        patch: operations["patch_campaign_v1_campaigns__campaign_id__patch"];
+        trace?: never;
+    };
+    "/v1/campaigns/{campaign_id}/companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Campaign Companies */
+        get: operations["list_campaign_companies_v1_campaigns__campaign_id__companies_get"];
+        put?: never;
+        /** Add Campaign Companies */
+        post: operations["add_campaign_companies_v1_campaigns__campaign_id__companies_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/campaigns/{campaign_id}/companies/{company_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Campaign Company */
+        patch: operations["patch_campaign_company_v1_campaigns__campaign_id__companies__company_id__patch"];
+        trace?: never;
+    };
+    "/v1/imports/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Import Template */
+        get: operations["import_template_v1_imports_template_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/imports/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Import */
+        post: operations["preview_import_v1_imports_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/imports/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Import */
+        post: operations["confirm_import_v1_imports_confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/activities": {
         parameters: {
             query?: never;
@@ -677,6 +799,8 @@ export interface components {
              * @default Normal
              */
             priority: string;
+            /** Campaign Id */
+            campaign_id?: string | null;
         };
         /** ActionOut */
         ActionOut: {
@@ -704,6 +828,8 @@ export interface components {
             status: string;
             /** Source Activity Id */
             source_activity_id: string | null;
+            /** Campaign Id */
+            campaign_id?: string | null;
         };
         /** ActivityIn */
         ActivityIn: {
@@ -725,6 +851,8 @@ export interface components {
             /** Outcome */
             outcome?: string | null;
             follow_up?: components["schemas"]["FollowUpIn"] | null;
+            /** Campaign Id */
+            campaign_id?: string | null;
         };
         /** ActivityOut */
         ActivityOut: {
@@ -748,6 +876,102 @@ export interface components {
             outcome: string | null;
             /** Source Action Id */
             source_action_id: string | null;
+            /** Campaign Id */
+            campaign_id?: string | null;
+        };
+        /** AddCompaniesIn */
+        AddCompaniesIn: {
+            /** Company Ids */
+            company_ids: string[];
+        };
+        /** CampaignCompanyOut */
+        CampaignCompanyOut: {
+            /** Id */
+            id: string;
+            /** Company Id */
+            company_id: string;
+            /** Company Name */
+            company_name: string;
+            /** Country */
+            country: string | null;
+            /** Nature Of Business */
+            nature_of_business: string | null;
+            /** Status */
+            status: string;
+            /** Owner User Id */
+            owner_user_id: string | null;
+            /** Effective Owner User Id */
+            effective_owner_user_id: string | null;
+            /** Next Action Due Date */
+            next_action_due_date: string | null;
+            /** Notes */
+            notes: string | null;
+        };
+        /** CampaignCompanyPatch */
+        CampaignCompanyPatch: {
+            /** Status */
+            status?: string | null;
+            /** Owner User Id */
+            owner_user_id?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Record State */
+            record_state?: string | null;
+        };
+        /** CampaignIn */
+        CampaignIn: {
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Owner User Id */
+            owner_user_id?: string | null;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /**
+             * Status
+             * @default Planned
+             */
+            status: string;
+            /** Record State */
+            record_state?: string | null;
+            /**
+             * Cancel Open Actions
+             * @default false
+             */
+            cancel_open_actions: boolean;
+        };
+        /** CampaignOut */
+        CampaignOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string | null;
+            /** Owner User Id */
+            owner_user_id: string;
+            /** Start Date */
+            start_date: string;
+            /** End Date */
+            end_date: string;
+            /** Status */
+            status: string;
+            /** Record State */
+            record_state: string;
+            /**
+             * Company Count
+             * @default 0
+             */
+            company_count: number;
         };
         /** CancelIn */
         CancelIn: {
@@ -813,6 +1037,21 @@ export interface components {
             /** Description */
             description?: string | null;
             follow_up?: components["schemas"]["FollowUpIn"] | null;
+        };
+        /** ConfirmIn */
+        ConfirmIn: {
+            /**
+             * Filename
+             * @default import.csv
+             */
+            filename: string;
+            /**
+             * Owner Fallback
+             * @default null
+             */
+            owner_fallback: string;
+            /** Rows */
+            rows: components["schemas"]["PreviewRow"][];
         };
         /** ContactIn */
         ContactIn: {
@@ -953,6 +1192,8 @@ export interface components {
             owner_user_id?: string | null;
             /** Contact Id */
             contact_id?: string | null;
+            /** Campaign Id */
+            campaign_id?: string | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1030,6 +1271,90 @@ export interface components {
             role: string;
             /** Status */
             status: string;
+        };
+        /** PreviewIn */
+        PreviewIn: {
+            /**
+             * Filename
+             * @default import.csv
+             */
+            filename: string;
+            /** Csv Text */
+            csv_text: string;
+        };
+        /** PreviewOut */
+        PreviewOut: {
+            /** Filename */
+            filename: string;
+            /** Row Count */
+            row_count: number;
+            /** New Company Count */
+            new_company_count: number;
+            /** Possible Duplicate Count */
+            possible_duplicate_count: number;
+            /** Unmatched Owner Count */
+            unmatched_owner_count: number;
+            /** Invalid Row Count */
+            invalid_row_count: number;
+            /** Rows */
+            rows: components["schemas"]["PreviewRow"][];
+        };
+        /** PreviewRow */
+        PreviewRow: {
+            /** Index */
+            index: number;
+            /** Company Name */
+            company_name: string;
+            /** Legal Name */
+            legal_name?: string | null;
+            /** Country */
+            country?: string | null;
+            /** City */
+            city?: string | null;
+            /** Address */
+            address?: string | null;
+            /** Website */
+            website?: string | null;
+            /** Telephone */
+            telephone?: string | null;
+            /** Nature Of Business */
+            nature_of_business?: string | null;
+            /**
+             * Company Status
+             * @default Prospect
+             */
+            company_status: string;
+            /** Owner Email */
+            owner_email?: string | null;
+            /** Owner User Id */
+            owner_user_id?: string | null;
+            /** Contact First Name */
+            contact_first_name?: string | null;
+            /** Contact Last Name */
+            contact_last_name?: string | null;
+            /** Contact Title */
+            contact_title?: string | null;
+            /** Contact Telephone */
+            contact_telephone?: string | null;
+            /** Contact Mobile */
+            contact_mobile?: string | null;
+            /** Contact Email */
+            contact_email?: string | null;
+            /** Linkedin Url */
+            linkedin_url?: string | null;
+            /** Flag */
+            flag: string;
+            /** Match Company Id */
+            match_company_id?: string | null;
+            /** Match Company Name */
+            match_company_name?: string | null;
+            /** Error */
+            error?: string | null;
+            /**
+             * Action
+             * @default create
+             */
+            action: string;
         };
         /** RegistrationRow */
         RegistrationRow: {
@@ -1860,6 +2185,7 @@ export interface operations {
             query?: {
                 q?: string;
                 record_state?: string;
+                country?: string;
             };
             header?: {
                 authorization?: string | null;
@@ -2142,11 +2468,363 @@ export interface operations {
             };
         };
     };
+    list_campaigns_v1_campaigns_get: {
+        parameters: {
+            query?: {
+                record_state?: string;
+            };
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_campaign_v1_campaigns_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CampaignIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_campaign_v1_campaigns__campaign_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path: {
+                campaign_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_campaign_v1_campaigns__campaign_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path: {
+                campaign_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CampaignIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_campaign_companies_v1_campaigns__campaign_id__companies_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path: {
+                campaign_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignCompanyOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_campaign_companies_v1_campaigns__campaign_id__companies_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path: {
+                campaign_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddCompaniesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: number;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_campaign_company_v1_campaigns__campaign_id__companies__company_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path: {
+                campaign_id: string;
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CampaignCompanyPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_template_v1_imports_template_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    preview_import_v1_imports_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_import_v1_imports_confirm_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_activities_v1_activities_get: {
         parameters: {
             query?: {
                 company_id?: string | null;
                 contact_id?: string | null;
+                campaign_id?: string | null;
             };
             header?: {
                 authorization?: string | null;
@@ -2292,6 +2970,7 @@ export interface operations {
             query?: {
                 company_id?: string | null;
                 contact_id?: string | null;
+                campaign_id?: string | null;
                 horizon?: string;
                 scope?: string;
             };
