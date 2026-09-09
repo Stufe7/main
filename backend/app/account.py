@@ -23,24 +23,29 @@ class EmailChangeOut(BaseModel):
     change_id: str | None = None
 
 
-def sync_confirmed_email(claims: Claims, user_id: str) -> str | None:
+def sync_confirmed_email_on(cur, connection, claims: Claims, user_id: str) -> str | None:
+    """May commit or roll back. Caller must re-bind request claims afterwards."""
     auth_email = str(claims.get("email") or "").strip()
     if not auth_email:
         return None
+    cur.execute("select email from public.app_user where id = %s", (user_id,))
+    row = cur.fetchone()
+    stored = row[0] if row else None
+    if not stored or stored.lower() == auth_email.lower():
+        return None
+    try:
+        cur.execute("select public.app_email_change_commit(%s, %s)", (user_id, auth_email))
+        connection.commit()
+    except Exception as extra:
+        connection.rollback()
+        return pg_detail(extra)
+    return None
+
+
+def sync_confirmed_email(claims: Claims, user_id: str) -> str | None:
     with runtime_connection() as connection, connection.cursor() as cur:
         _runtime_claims(cur, claims)
-        cur.execute("select email from public.app_user where id = %s", (user_id,))
-        row = cur.fetchone()
-        stored = row[0] if row else None
-        if not stored or stored.lower() == auth_email.lower():
-            return None
-        try:
-            cur.execute("select public.app_email_change_commit(%s, %s)", (user_id, auth_email))
-            connection.commit()
-        except Exception as extra:
-            connection.rollback()
-            return pg_detail(extra)
-    return None
+        return sync_confirmed_email_on(cur, connection, claims, user_id)
 
 
 @router.post("/email-change/start", response_model=EmailChangeOut)

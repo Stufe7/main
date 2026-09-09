@@ -68,6 +68,14 @@ _SELECT = """
     join public.company co on co.id = c.company_id and co.entity_id = c.entity_id
 """
 
+_SELECT_LIST = """
+    select c.id, c.company_id, co.company_name, c.first_name, c.last_name, c.job_title,
+           c.email, c.telephone, c.mobile, c.linkedin_url, null, c.record_state,
+           c.next_action_due_date
+    from public.contact c
+    join public.company co on co.id = c.company_id and co.entity_id = c.entity_id
+"""
+
 
 @router.get("/contacts", response_model=list[ContactOut])
 def list_contacts(
@@ -96,7 +104,7 @@ def list_contacts(
             like = f"%{q.strip()}%"
             params.extend([like, like, like, like])
         cur.execute(
-            f"{_SELECT} where {where} order by lower(c.last_name), lower(c.first_name) limit 500",
+            f"{_SELECT_LIST} where {where} order by lower(c.last_name), lower(c.first_name) limit 500",
             params,
         )
         return [_row(row) for row in cur.fetchall()]

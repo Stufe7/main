@@ -2,15 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import {
-		api,
-		type ActionItem,
-		type Activity,
-		type Contact,
-		type SessionInfo
-	} from '$lib/api/client';
+	import { api, withActiveEntity, type ActionItem, type Activity, type Contact } from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
-	import { ensureActiveEntity } from '$lib/entity';
 
 	const contactId = $derived(page.params.id);
 	let row = $state<Contact | null>(null);
@@ -34,13 +27,8 @@
 			await goto('/');
 			return;
 		}
-		const session = await api<SessionInfo>('/v1/session');
-		if (!ensureActiveEntity(session.memberships)) {
-			error = 'No entity membership.';
-			return;
-		}
 		try {
-			await load();
+			await withActiveEntity(load);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not load contact.';
 		}

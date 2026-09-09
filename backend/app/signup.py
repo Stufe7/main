@@ -153,10 +153,11 @@ def session(
     claims: Annotated[Claims, Depends(bearer_claims)],
     user_id: Annotated[str, Depends(require_user_id)],
 ) -> SessionOut:
-    from app.account import sync_confirmed_email
+    from app.account import sync_confirmed_email_on
 
-    email_sync_error = sync_confirmed_email(claims, user_id)
     with runtime_connection() as connection, connection.cursor() as cur:
+        _runtime_claims(cur, claims)
+        email_sync_error = sync_confirmed_email_on(cur, connection, claims, user_id)
         _runtime_claims(cur, claims)
         cur.execute(
             """

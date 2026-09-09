@@ -46,6 +46,10 @@ def test_company_campaigns_require_session() -> None:
     assert client.get(f"/v1/companies/{PROBE}/campaigns").status_code == 401
 
 
+def test_session_requires_auth() -> None:
+    assert client.get("/v1/session").status_code == 401
+
+
 def test_email_change_requires_session() -> None:
     assert (
         client.post("/v1/account/email-change/start", json={"email": "a@example.com"}).status_code

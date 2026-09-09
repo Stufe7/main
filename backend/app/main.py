@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -7,6 +9,7 @@ from app.campaigns import router as campaigns_router
 from app.companies import router as companies_router
 from app.contacts import router as contacts_router
 from app.crm import router as crm_router
+from app.db import close_runtime_pool
 from app.domains import router as domains_router
 from app.imports import router as imports_router
 from app.invitations import router as invitations_router
@@ -24,11 +27,19 @@ from app.spike1 import prove_auth_uid
 
 configure_logging()
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    yield
+    close_runtime_pool()
+
+
 app = FastAPI(
     title="Stufe7 API",
     version=settings.app_version,
     docs_url="/docs" if settings.app_env != "production" else None,
     redoc_url=None,
+    lifespan=lifespan,
 )
 
 app.add_middleware(CorrelationIdMiddleware)

@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/public';
-import { activeEntityId } from '$lib/entity';
+import { activeEntityId, ensureActiveEntity } from '$lib/entity';
 import { getSupabase } from '$lib/supabase/client';
 
 export class ApiError extends Error {
@@ -10,14 +10,57 @@ export class ApiError extends Error {
 	}
 }
 
+const TOKEN_SKEW_MS = 30_000;
+const SESSION_TTL_MS = 15_000;
+
+let cachedToken: { value: string; exp: number } | null = null;
+let sessionCache: { data: SessionInfo; at: number } | null = null;
+let sessionInflight: Promise<SessionInfo> | null = null;
+
+function jwtExpMs(token: string): number {
+	try {
+		const part = token.split('.')[1];
+		if (!part) return 0;
+		const padded = part.replace(/-/g, '+').replace(/_/g, '/');
+		const json = JSON.parse(atob(padded)) as { exp?: number };
+		return Number(json.exp || 0) * 1000;
+	} catch {
+		return 0;
+	}
+}
+
+export function rememberAccessToken(token: string | null) {
+	if (!token) {
+		cachedToken = null;
+		return;
+	}
+	cachedToken = { value: token, exp: jwtExpMs(token) };
+}
+
+export function clearApiCaches() {
+	cachedToken = null;
+	sessionCache = null;
+	sessionInflight = null;
+}
+
 async function accessToken(): Promise<string | null> {
+	if (cachedToken && cachedToken.exp - TOKEN_SKEW_MS > Date.now()) {
+		return cachedToken.value;
+	}
 	const supabase = getSupabase();
 	if (!supabase) return null;
 	const { data } = await supabase.auth.getSession();
-	return data.session?.access_token ?? null;
+	const token = data.session?.access_token ?? null;
+	rememberAccessToken(token);
+	return token;
 }
 
-export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+function isGetSession(path: string, init: RequestInit): boolean {
+	if (path !== '/v1/session') return false;
+	return (init.method || 'GET').toUpperCase() === 'GET';
+}
+
+async function apiRaw<T>(path: string, init: RequestInit = {}): Promise<T> {
 	const token = await accessToken();
 	const base = (env.PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
 	if (!base) throw new ApiError(503, 'API is not configured');
@@ -28,6 +71,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 	if (entity) headers.set('X-Entity-Id', entity);
 	const response = await fetch(`${base}${path}`, { ...init, headers });
 	if (!response.ok) {
+		if (response.status === 401) clearApiCaches();
 		let detail = response.statusText;
 		try {
 			const body = (await response.json()) as { detail?: string };
@@ -39,6 +83,43 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 	}
 	if (response.status === 204) return undefined as T;
 	return (await response.json()) as T;
+}
+
+export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+	if (!isGetSession(path, init)) {
+		return apiRaw<T>(path, init);
+	}
+	if (sessionCache && Date.now() - sessionCache.at < SESSION_TTL_MS) {
+		return sessionCache.data as T;
+	}
+	if (!sessionInflight) {
+		sessionInflight = apiRaw<SessionInfo>('/v1/session')
+			.then((data) => {
+				sessionCache = { data, at: Date.now() };
+				return data;
+			})
+			.finally(() => {
+				sessionInflight = null;
+			});
+	}
+	return sessionInflight as Promise<T>;
+}
+
+async function ensureAppSession(): Promise<SessionInfo> {
+	const session = await api<SessionInfo>('/v1/session');
+	if (!ensureActiveEntity(session.memberships)) {
+		throw new ApiError(403, 'No entity membership.');
+	}
+	return session;
+}
+
+export async function withActiveEntity<T>(load: () => Promise<T>): Promise<T> {
+	if (activeEntityId()) {
+		const [, result] = await Promise.all([ensureAppSession(), load()]);
+		return result;
+	}
+	await ensureAppSession();
+	return load();
 }
 
 export type Membership = {

@@ -98,6 +98,17 @@ _CAM_SELECT = """
     from public.campaign cam
 """
 
+_CAM_LIST_SELECT = """
+    select cam.id, cam.name, null, cam.owner_user_id, cam.start_date,
+           cam.end_date, cam.status, cam.record_state,
+           (
+             select count(*) from public.campaign_company cc
+             where cc.campaign_id = cam.id and cc.entity_id = cam.entity_id
+               and cc.record_state = 'Active'
+           )
+    from public.campaign cam
+"""
+
 
 @router.get("/campaigns", response_model=list[CampaignOut])
 def list_campaigns(
@@ -114,7 +125,7 @@ def list_campaigns(
             where += " and cam.record_state = %s"
             params.append(record_state)
         cur.execute(
-            f"{_CAM_SELECT} where {where} order by cam.start_date desc, cam.name limit 200",
+            f"{_CAM_LIST_SELECT} where {where} order by cam.start_date desc, cam.name limit 200",
             params,
         )
         return [_campaign_row(row) for row in cur.fetchall()]
@@ -269,7 +280,7 @@ def list_campaign_companies(
             select cc.id, cc.company_id, c.company_name, c.country, c.nature_of_business,
                    cc.status, cc.owner_user_id,
                    coalesce(cc.owner_user_id, c.owner_user_id),
-                   c.next_action_due_date, cc.notes
+                   c.next_action_due_date, null
             from public.campaign_company cc
             join public.company c on c.id = cc.company_id and c.entity_id = cc.entity_id
             where cc.entity_id = %s and cc.campaign_id = %s and cc.record_state = 'Active'

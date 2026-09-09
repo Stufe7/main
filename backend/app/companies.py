@@ -118,7 +118,7 @@ def list_companies(
         cur.execute(
             f"""
             select id, company_name, legal_name, status, record_state, country,
-                   website, notes, owner_user_id, next_action_due_date
+                   website, null, owner_user_id, next_action_due_date
             from public.company
             where {where}
             order by lower(company_name)

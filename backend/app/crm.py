@@ -166,6 +166,14 @@ _ACT_SELECT = """
     join public.company co on co.id = a.company_id and co.entity_id = a.entity_id
 """
 
+_ACT_LIST_SELECT = """
+    select a.id, a.company_id, co.company_name, a.contact_id, a.activity_type,
+           a.activity_date, a.subject, null, null, a.source_action_id,
+           a.campaign_id
+    from public.activity a
+    join public.company co on co.id = a.company_id and co.entity_id = a.entity_id
+"""
+
 _ACTN_SELECT = """
     select x.id, x.company_id, co.company_name, x.contact_id, x.owner_user_id,
            x.action_type, x.description, x.due_date, x.due_time, x.priority,
@@ -248,7 +256,7 @@ def list_activities(
             where += " and a.campaign_id = %s"
             params.append(campaign_id)
         cur.execute(
-            f"{_ACT_SELECT} where {where} order by a.activity_date desc, a.created_at desc limit 200",
+            f"{_ACT_LIST_SELECT} where {where} order by a.activity_date desc, a.created_at desc limit 200",
             params,
         )
         return [_activity_row(row) for row in cur.fetchall()]
@@ -398,6 +406,55 @@ def patch_activity(
     return _activity_row(row)
 
 
+def _list_actions_on(
+    cur,
+    *,
+    user_id: str,
+    entity_id: str,
+    company_id: str | None = None,
+    contact_id: str | None = None,
+    campaign_id: str | None = None,
+    horizon: str = "open",
+    scope: str = "my",
+) -> tuple[str, date, date, list[ActionOut]]:
+    tz_name, today, week_end = _viewer_today(cur, user_id, entity_id)
+    params: list[object] = [entity_id]
+    where = "x.entity_id = %s and x.status = 'Open'"
+    if company_id:
+        where += " and x.company_id = %s"
+        params.append(company_id)
+    if contact_id:
+        where += " and x.contact_id = %s"
+        params.append(contact_id)
+    if campaign_id:
+        where += " and x.campaign_id = %s"
+        params.append(campaign_id)
+    if scope == "my":
+        where += " and x.owner_user_id = %s"
+        params.append(user_id)
+    if horizon == "overdue":
+        where += " and x.due_date < %s"
+        params.append(today)
+    elif horizon == "today":
+        where += " and x.due_date = %s"
+        params.append(today)
+    elif horizon == "week":
+        where += " and x.due_date >= %s and x.due_date <= %s"
+        params.extend([today, week_end])
+    cur.execute(
+        f"""
+        {_ACTN_SELECT}
+        where {where}
+        order by x.due_date asc, (x.due_time is null), x.due_time asc,
+                 case x.priority when 'High' then 0 when 'Normal' then 1 else 2 end,
+                 x.created_at asc
+        limit 200
+        """,
+        params,
+    )
+    return tz_name, today, week_end, [_action_row(row) for row in cur.fetchall()]
+
+
 @router.get("/actions", response_model=list[ActionOut])
 def list_actions(
     claims: Annotated[Claims, Depends(bearer_claims)],
@@ -411,42 +468,17 @@ def list_actions(
 ) -> list[ActionOut]:
     with runtime_connection() as connection, connection.cursor() as cur:
         bind_request(cur, claims, entity_id)
-        _tz, today, week_end = _viewer_today(cur, user_id, entity_id)
-        params: list[object] = [entity_id]
-        where = "x.entity_id = %s and x.status = 'Open'"
-        if company_id:
-            where += " and x.company_id = %s"
-            params.append(company_id)
-        if contact_id:
-            where += " and x.contact_id = %s"
-            params.append(contact_id)
-        if campaign_id:
-            where += " and x.campaign_id = %s"
-            params.append(campaign_id)
-        if scope == "my":
-            where += " and x.owner_user_id = %s"
-            params.append(user_id)
-        if horizon == "overdue":
-            where += " and x.due_date < %s"
-            params.append(today)
-        elif horizon == "today":
-            where += " and x.due_date = %s"
-            params.append(today)
-        elif horizon == "week":
-            where += " and x.due_date >= %s and x.due_date <= %s"
-            params.extend([today, week_end])
-        cur.execute(
-            f"""
-            {_ACTN_SELECT}
-            where {where}
-            order by x.due_date asc, (x.due_time is null), x.due_time asc,
-                     case x.priority when 'High' then 0 when 'Normal' then 1 else 2 end,
-                     x.created_at asc
-            limit 200
-            """,
-            params,
+        _tz, _today, _week_end, actions = _list_actions_on(
+            cur,
+            user_id=user_id,
+            entity_id=entity_id,
+            company_id=company_id,
+            contact_id=contact_id,
+            campaign_id=campaign_id,
+            horizon=horizon,
+            scope=scope,
         )
-        return [_action_row(row) for row in cur.fetchall()]
+        return actions
 
 
 @router.post("/actions", response_model=ActionOut)
@@ -609,16 +641,15 @@ def home(
     horizon: str = Query(default="today"),
     scope: str = Query(default="my"),
 ) -> HomeOut:
-    actions = list_actions(
-        claims=claims,
-        user_id=user_id,
-        entity_id=entity_id,
-        horizon=horizon,
-        scope=scope,
-    )
     with runtime_connection() as connection, connection.cursor() as cur:
         bind_request(cur, claims, entity_id)
-        tz_name, today, _week_end = _viewer_today(cur, user_id, entity_id)
+        tz_name, today, _week_end, actions = _list_actions_on(
+            cur,
+            user_id=user_id,
+            entity_id=entity_id,
+            horizon=horizon,
+            scope=scope,
+        )
         cur.execute(
             """
             select count(*) from public.company

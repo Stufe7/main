@@ -2,9 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { api, type Company, type Member, type SessionInfo } from '$lib/api/client';
+	import { api, withActiveEntity, type Company, type Member } from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
-	import { ensureActiveEntity } from '$lib/entity';
 
 	type Campaign = {
 		id: string;
@@ -61,12 +60,18 @@
 	async function load() {
 		const id = campaignId;
 		if (!id) return;
-		campaign = await api<Campaign>(`/v1/campaigns/${id}`);
+		const [cam, memberRows, companyRows, catalogRows] = await Promise.all([
+			api<Campaign>(`/v1/campaigns/${id}`),
+			api<Member[]>('/v1/members'),
+			api<Row[]>(`/v1/campaigns/${id}/companies`),
+			api<Company[]>('/v1/companies')
+		]);
+		campaign = cam;
 		if (campaign.start_date) campaign.start_date = campaign.start_date.slice(0, 10);
 		if (campaign.end_date) campaign.end_date = campaign.end_date.slice(0, 10);
-		members = await api<Member[]>('/v1/members');
-		companies = await api<Row[]>(`/v1/campaigns/${id}/companies`);
-		catalog = await api<Company[]>('/v1/companies');
+		members = memberRows;
+		companies = companyRows;
+		catalog = catalogRows;
 	}
 
 	onMount(async () => {
@@ -74,10 +79,8 @@
 			await goto('/');
 			return;
 		}
-		const session = await api<SessionInfo>('/v1/session');
-		ensureActiveEntity(session.memberships);
 		try {
-			await load();
+			await withActiveEntity(load);
 			if (page.url.searchParams.get('saved') === '1') {
 				info = 'Campaign saved.';
 			}

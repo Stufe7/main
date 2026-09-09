@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { api, type HomeInfo, type SessionInfo } from '$lib/api/client';
+	import { api, withActiveEntity, type HomeInfo } from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
-	import { ensureActiveEntity } from '$lib/entity';
 
 	let home = $state<HomeInfo | null>(null);
 	let horizon = $state('today');
@@ -18,12 +17,9 @@
 	async function load() {
 		error = '';
 		try {
-			const session = await api<SessionInfo>('/v1/session');
-			if (!ensureActiveEntity(session.memberships)) {
-				error = 'No entity membership.';
-				return;
-			}
-			home = await api<HomeInfo>(`/v1/home?horizon=${horizon}&scope=${scope}`);
+			home = await withActiveEntity(() =>
+				api<HomeInfo>(`/v1/home?horizon=${horizon}&scope=${scope}`)
+			);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not load home.';
 		}

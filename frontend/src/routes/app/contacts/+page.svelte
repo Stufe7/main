@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { api, type Contact, type SessionInfo } from '$lib/api/client';
+	import { api, withActiveEntity, type Contact } from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
-	import { ensureActiveEntity } from '$lib/entity';
 
 	let rows = $state<Contact[]>([]);
 	let q = $state('');
@@ -24,12 +23,11 @@
 			await goto('/');
 			return;
 		}
-		const session = await api<SessionInfo>('/v1/session');
-		if (!ensureActiveEntity(session.memberships)) {
-			error = 'No entity membership.';
-			return;
+		try {
+			await withActiveEntity(load);
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not load contacts.';
 		}
-		await load();
 	});
 </script>
 

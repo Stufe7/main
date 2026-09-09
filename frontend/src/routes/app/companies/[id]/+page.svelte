@@ -4,15 +4,14 @@
 	import { page } from '$app/state';
 	import {
 		api,
+		withActiveEntity,
 		type ActionItem,
 		type Activity,
 		type Company,
 		type Contact,
-		type Member,
-		type SessionInfo
+		type Member
 	} from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
-	import { ensureActiveEntity } from '$lib/entity';
 
 	type Campaign = { id: string; name: string; status: string };
 	type Membership = { id: string; name: string; status: string; membership_status: string };
@@ -48,36 +47,37 @@
 			return;
 		}
 		try {
-			const session = await api<SessionInfo>('/v1/session');
-			if (!ensureActiveEntity(session.memberships)) {
-				error = 'No entity membership.';
-				return;
-			}
 			const id = page.params.id;
 			if (!id) {
 				error = 'Missing company.';
 				return;
 			}
-			row = await api<Company>(`/v1/companies/${id}`);
-			try {
-				[members, contacts, activities, actions] = await Promise.all([
+			await withActiveEntity(async () => {
+				const [
+					company,
+					memberRows,
+					contactRows,
+					activityRows,
+					actionRows,
+					campaignRows,
+					membershipRows
+				] = await Promise.all([
+					api<Company>(`/v1/companies/${id}`),
 					api<Member[]>('/v1/members'),
 					api<Contact[]>(`/v1/contacts?company_id=${id}`),
 					api<Activity[]>(`/v1/activities?company_id=${id}`),
-					api<ActionItem[]>(`/v1/actions?company_id=${id}&horizon=open&scope=team`)
+					api<ActionItem[]>(`/v1/actions?company_id=${id}&horizon=open&scope=team`),
+					api<Campaign[]>('/v1/campaigns').catch(() => [] as Campaign[]),
+					api<Membership[]>(`/v1/companies/${id}/campaigns`).catch(() => [] as Membership[])
 				]);
-			} catch (err) {
-				error = err instanceof Error ? err.message : 'Could not load company extras.';
-			}
-			try {
-				[campaigns, memberships] = await Promise.all([
-					api<Campaign[]>('/v1/campaigns'),
-					api<Membership[]>(`/v1/companies/${id}/campaigns`)
-				]);
-			} catch {
-				campaigns = [];
-				memberships = [];
-			}
+				row = company;
+				members = memberRows;
+				contacts = contactRows;
+				activities = activityRows;
+				actions = actionRows;
+				campaigns = campaignRows;
+				memberships = membershipRows;
+			});
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not load company.';
 		} finally {
