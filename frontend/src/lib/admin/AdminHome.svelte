@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { PLATFORM_LOGIN_EMAIL } from '$lib/admin/login';
 	import AuthModal from '$lib/auth/AuthModal.svelte';
 	import { requireSession } from '$lib/auth/session.svelte';
 
@@ -17,10 +18,17 @@
 <div class="gate">
 	<img src="/stufe7-logo.svg" alt="Stufe7" />
 	<h1>Platform admin</h1>
-	<p>Separate from the CRM. Sign in with a platform operator account.</p>
+	<p>Separate from the CRM. Only {PLATFORM_LOGIN_EMAIL} can sign in. A one-time code is emailed.</p>
 </div>
 
-<AuthModal bind:open={authOpen} bind:tab={authTab} allowSignup={false} nextPath="/platform" dismissible={false} />
+<AuthModal
+	bind:open={authOpen}
+	bind:tab={authTab}
+	allowSignup={false}
+	nextPath="/platform"
+	dismissible={false}
+	allowedEmail={PLATFORM_LOGIN_EMAIL}
+/>
 
 <style>
 	.gate {

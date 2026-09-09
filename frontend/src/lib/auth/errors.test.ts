@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { COMPANY_EMAIL_REJECT, formatSignInOtpError, OTP_RATE_LIMIT } from './errors.ts';
+import { COMPANY_EMAIL_REJECT, formatSignInOtpError, OTP_NO_ACCOUNT, OTP_RATE_LIMIT } from './errors.ts';
 
 describe('formatSignInOtpError', () => {
 	it('keeps the hook company-email message', () => {
@@ -14,6 +14,17 @@ describe('formatSignInOtpError', () => {
 		assert.equal(
 			formatSignInOtpError({ status: 400, message: 'Invalid payload sent to hook' }),
 			`400 — ${COMPANY_EMAIL_REJECT}`
+		);
+	});
+
+	it('maps missing-user OTP signup blocks to a no-account message', () => {
+		assert.equal(
+			formatSignInOtpError({
+				status: 422,
+				code: 'otp_disabled',
+				message: 'Signups not allowed for otp'
+			}),
+			OTP_NO_ACCOUNT
 		);
 	});
 

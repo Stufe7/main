@@ -9,12 +9,20 @@
 	type Tab = 'login' | 'signup';
 	type Step = 'form' | 'otp';
 
-	let { open = $bindable(false), tab = $bindable<Tab>('login'), allowSignup = true, nextPath = '/app', dismissible = true }: {
+	let {
+		open = $bindable(false),
+		tab = $bindable<Tab>('login'),
+		allowSignup = true,
+		nextPath = '/app',
+		dismissible = true,
+		allowedEmail = ''
+	}: {
 		open?: boolean;
 		tab?: Tab;
 		allowSignup?: boolean;
 		nextPath?: string;
 		dismissible?: boolean;
+		allowedEmail?: string;
 	} = $props();
 
 	let step = $state<Step>('form');
@@ -22,7 +30,7 @@
 	let error = $state('');
 	let info = $state('');
 
-	let loginEmail = $state('');
+	let loginEmail = $state(allowedEmail);
 	let signup = $state({
 		firstName: '',
 		lastName: '',
@@ -109,6 +117,10 @@
 
 	async function submitLogin(event: Event) {
 		event.preventDefault();
+		if (allowedEmail && loginEmail.trim().toLowerCase() !== allowedEmail.toLowerCase()) {
+			error = `Only ${allowedEmail} can sign in here.`;
+			return;
+		}
 		await sendOtp(loginEmail, false);
 	}
 
@@ -206,7 +218,13 @@
 					<h2 id="auth-title">Log in</h2>
 					<label>
 						Work email
-						<input type="email" bind:value={loginEmail} autocomplete="username" required />
+						<input
+							type="email"
+							bind:value={loginEmail}
+							autocomplete="username"
+							required
+							readonly={Boolean(allowedEmail)}
+						/>
 					</label>
 					<button class="primary" type="submit" disabled={busy}>Email me a code</button>
 				</form>

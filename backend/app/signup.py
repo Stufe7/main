@@ -188,6 +188,12 @@ def session(
             (user_id,),
         )
         pending = bool(cur.fetchone()[0])
+        email = str(claims.get("email") or "")
+        if email.lower() == settings.mail_admin_to.lower():
+            cur.execute(
+                "select public.app_bootstrap_platform_operator(%s, %s)",
+                (user_id, email),
+            )
         cur.execute("select public.app_is_platform_admin(%s)", (user_id,))
         platform_admin = bool(cur.fetchone()[0])
         cur.execute("select public.app_is_privacy_operator(%s)", (user_id,))
