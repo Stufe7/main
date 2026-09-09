@@ -77,11 +77,60 @@ export type Company = {
 	next_action_due_date: string | null;
 };
 
-export type Member = {
-	user_id: string;
-	email: string;
-	first_name: string | null;
-	last_name: string | null;
-	role: string;
+export type Contact = {
+	id: string;
+	company_id: string;
+	company_name: string | null;
+	first_name: string;
+	last_name: string;
+	job_title: string | null;
+	email: string | null;
+	telephone: string | null;
+	mobile: string | null;
+	linkedin_url: string | null;
+	notes: string | null;
+	record_state: string;
+	next_action_due_date: string | null;
+};
+
+export type Activity = {
+	id: string;
+	company_id: string;
+	company_name: string | null;
+	contact_id: string | null;
+	activity_type: string;
+	activity_date: string;
+	subject: string;
+	description: string | null;
+	outcome: string | null;
+	source_action_id: string | null;
+};
+
+export type ActionItem = {
+	id: string;
+	company_id: string;
+	company_name: string | null;
+	contact_id: string | null;
+	owner_user_id: string;
+	action_type: string;
+	description: string;
+	due_date: string | null;
+	due_time: string | null;
+	priority: string;
 	status: string;
+	source_activity_id: string | null;
+};
+
+export type HomeInfo = {
+	timezone: string;
+	today: string;
+	actions: ActionItem[];
+	attention_count: number;
+	handovers: {
+		id: string;
+		company_id: string;
+		company_name: string;
+		reason: string;
+		created_at: string;
+	}[];
 };

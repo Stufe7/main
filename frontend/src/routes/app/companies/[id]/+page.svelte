@@ -2,14 +2,20 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { api, type Company, type Member } from '$lib/api/client';
+	import { api, type ActionItem, type Activity, type Company, type Contact, type Member } from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
 
 	const companyId = $derived($page.params.id);
 	let row = $state<Company | null>(null);
 	let members = $state<Member[]>([]);
+	let contacts = $state<Contact[]>([]);
+	let activities = $state<Activity[]>([]);
+	let actions = $state<ActionItem[]>([]);
 	let error = $state('');
 	let busy = $state(false);
+	let subject = $state('');
+	let nextDue = $state('');
+	let nextDesc = $state('');
 
 	onMount(async () => {
 		if (!(await requireSession())) {
@@ -17,9 +23,12 @@
 			return;
 		}
 		try {
-			[row, members] = await Promise.all([
+			[row, members, contacts, activities, actions] = await Promise.all([
 				api<Company>(`/v1/companies/${companyId}`),
-				api<Member[]>('/v1/members')
+				api<Member[]>('/v1/members'),
+				api<Contact[]>(`/v1/contacts?company_id=${companyId}`),
+				api<Activity[]>(`/v1/activities?company_id=${companyId}`),
+				api<ActionItem[]>(`/v1/actions?company_id=${companyId}&horizon=open&scope=team`)
 			]);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not load company.';
@@ -47,6 +56,37 @@
 			});
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Save failed.';
+		} finally {
+			busy = false;
+		}
+	}
+
+	async function logActivity(event: Event) {
+		event.preventDefault();
+		if (!row) return;
+		busy = true;
+		error = '';
+		try {
+			const body: Record<string, unknown> = {
+				company_id: row.id,
+				activity_type: 'Note',
+				subject
+			};
+			if (nextDue && nextDesc) {
+				body.follow_up = {
+					action_type: 'Task',
+					description: nextDesc,
+					due_date: nextDue
+				};
+			}
+			await api('/v1/activities', { method: 'POST', body: JSON.stringify(body) });
+			subject = '';
+			nextDue = '';
+			nextDesc = '';
+			activities = await api<Activity[]>(`/v1/activities?company_id=${companyId}`);
+			actions = await api<ActionItem[]>(`/v1/actions?company_id=${companyId}&horizon=open&scope=team`);
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not save activity.';
 		} finally {
 			busy = false;
 		}
@@ -99,6 +139,36 @@
 				</button>
 			</div>
 		</form>
+		<p><a href={`/app/contacts/new?company=${row.id}`}>Add contact</a></p>
+		<h2>Contacts</h2>
+		<ul>
+			{#each contacts as person (person.id)}
+				<li>
+					<a href={`/app/contacts/${person.id}`}>{person.first_name} {person.last_name}</a>
+				</li>
+			{/each}
+		</ul>
+		<h2>Quick activity</h2>
+		<form onsubmit={logActivity}>
+			<label>Subject <input bind:value={subject} required /></label>
+			<label>Next action <input bind:value={nextDesc} /></label>
+			<label>Due <input type="date" bind:value={nextDue} /></label>
+			<button type="submit" disabled={busy}>Log</button>
+		</form>
+		<h2>Open actions</h2>
+		<ul>
+			{#each actions as item (item.id)}
+				<li>{item.due_date} · {item.priority} · {item.description}</li>
+			{/each}
+		</ul>
+		<h2>History</h2>
+		<ul>
+			{#each activities as item (item.id)}
+				<li>
+					<a href={`/app/activities/${item.id}`}>{item.activity_date.slice(0, 10)} · {item.subject}</a>
+				</li>
+			{/each}
+		</ul>
 	{/if}
 </section>
 

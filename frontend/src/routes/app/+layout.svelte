@@ -47,7 +47,9 @@
 	<header>
 		<a href="/app" class="brand"><img src="/stufe7-logo.svg" alt="Stufe7" /></a>
 		<nav>
+			<a href="/app">Home</a>
 			<a href="/app/companies">Companies</a>
+			<a href="/app/contacts">Contacts</a>
 			<a href="/app/invite">Invite</a>
 			<a href="/app/settings/domains">Domains</a>
 			<a href="/app/entities/new">New entity</a>

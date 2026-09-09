@@ -5,6 +5,8 @@ from app.observability import CorrelationIdMiddleware, configure_logging
 from app.settings import settings
 from app.approvals import router as approvals_router
 from app.companies import router as companies_router
+from app.contacts import router as contacts_router
+from app.crm import router as crm_router
 from app.domains import router as domains_router
 from app.invitations import router as invitations_router
 from app.phase1a import prove_kernel
@@ -34,6 +36,8 @@ app.include_router(approvals_router)
 app.include_router(invitations_router)
 app.include_router(domains_router)
 app.include_router(companies_router)
+app.include_router(contacts_router)
+app.include_router(crm_router)
 
 
 @app.get("/health", tags=["ops"])

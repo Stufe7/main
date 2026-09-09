@@ -262,6 +262,181 @@ export interface paths {
         patch: operations["patch_company_v1_companies__company_id__patch"];
         trace?: never;
     };
+    "/v1/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Contacts */
+        get: operations["list_contacts_v1_contacts_get"];
+        put?: never;
+        /** Create Contact */
+        post: operations["create_contact_v1_contacts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/contacts/{contact_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Contact */
+        get: operations["get_contact_v1_contacts__contact_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Contact */
+        patch: operations["patch_contact_v1_contacts__contact_id__patch"];
+        trace?: never;
+    };
+    "/v1/activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Activities */
+        get: operations["list_activities_v1_activities_get"];
+        put?: never;
+        /** Create Activity */
+        post: operations["create_activity_v1_activities_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/activities/{activity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Activity */
+        get: operations["get_activity_v1_activities__activity_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Activity */
+        patch: operations["patch_activity_v1_activities__activity_id__patch"];
+        trace?: never;
+    };
+    "/v1/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Actions */
+        get: operations["list_actions_v1_actions_get"];
+        put?: never;
+        /** Create Action */
+        post: operations["create_action_v1_actions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/actions/{action_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Action */
+        post: operations["complete_action_v1_actions__action_id__complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/actions/{action_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Action */
+        post: operations["cancel_action_v1_actions__action_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Home */
+        get: operations["home_v1_home_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/handovers/{handover_id}/ack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ack Handover */
+        post: operations["ack_handover_v1_handovers__handover_id__ack_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/handovers/ack-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ack All Handovers */
+        post: operations["ack_all_handovers_v1_handovers_ack_all_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -351,6 +526,110 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ActionIn */
+        ActionIn: {
+            /** Company Id */
+            company_id: string;
+            /** Contact Id */
+            contact_id?: string | null;
+            /** Owner User Id */
+            owner_user_id?: string | null;
+            /**
+             * Action Type
+             * @default Task
+             */
+            action_type: string;
+            /** Description */
+            description: string;
+            /**
+             * Due Date
+             * Format: date
+             */
+            due_date: string;
+            /** Due Time */
+            due_time?: string | null;
+            /**
+             * Priority
+             * @default Normal
+             */
+            priority: string;
+        };
+        /** ActionOut */
+        ActionOut: {
+            /** Id */
+            id: string;
+            /** Company Id */
+            company_id: string;
+            /** Company Name */
+            company_name?: string | null;
+            /** Contact Id */
+            contact_id: string | null;
+            /** Owner User Id */
+            owner_user_id: string;
+            /** Action Type */
+            action_type: string;
+            /** Description */
+            description: string;
+            /** Due Date */
+            due_date: string | null;
+            /** Due Time */
+            due_time: string | null;
+            /** Priority */
+            priority: string;
+            /** Status */
+            status: string;
+            /** Source Activity Id */
+            source_activity_id: string | null;
+        };
+        /** ActivityIn */
+        ActivityIn: {
+            /** Company Id */
+            company_id: string;
+            /** Contact Id */
+            contact_id?: string | null;
+            /**
+             * Activity Type
+             * @default Note
+             */
+            activity_type: string;
+            /** Activity Date */
+            activity_date?: string | null;
+            /** Subject */
+            subject: string;
+            /** Description */
+            description?: string | null;
+            /** Outcome */
+            outcome?: string | null;
+            follow_up?: components["schemas"]["FollowUpIn"] | null;
+        };
+        /** ActivityOut */
+        ActivityOut: {
+            /** Id */
+            id: string;
+            /** Company Id */
+            company_id: string;
+            /** Company Name */
+            company_name?: string | null;
+            /** Contact Id */
+            contact_id: string | null;
+            /** Activity Type */
+            activity_type: string;
+            /** Activity Date */
+            activity_date: string;
+            /** Subject */
+            subject: string;
+            /** Description */
+            description: string | null;
+            /** Outcome */
+            outcome: string | null;
+            /** Source Action Id */
+            source_action_id: string | null;
+        };
+        /** CancelIn */
+        CancelIn: {
+            /** Reason */
+            reason: string;
+        };
         /** CompanyIn */
         CompanyIn: {
             /** Company Name */
@@ -396,6 +675,78 @@ export interface components {
             /** Next Action Due Date */
             next_action_due_date: string | null;
         };
+        /** CompleteIn */
+        CompleteIn: {
+            /**
+             * Activity Type
+             * @default Note
+             */
+            activity_type: string;
+            /** Subject */
+            subject: string;
+            /** Outcome */
+            outcome?: string | null;
+            /** Description */
+            description?: string | null;
+            follow_up?: components["schemas"]["FollowUpIn"] | null;
+        };
+        /** ContactIn */
+        ContactIn: {
+            /** Company Id */
+            company_id: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /** Job Title */
+            job_title?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Telephone */
+            telephone?: string | null;
+            /** Mobile */
+            mobile?: string | null;
+            /** Linkedin Url */
+            linkedin_url?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Record State */
+            record_state?: string | null;
+            /**
+             * Cancel Open Actions
+             * @default false
+             */
+            cancel_open_actions: boolean;
+        };
+        /** ContactOut */
+        ContactOut: {
+            /** Id */
+            id: string;
+            /** Company Id */
+            company_id: string;
+            /** Company Name */
+            company_name?: string | null;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /** Job Title */
+            job_title: string | null;
+            /** Email */
+            email: string | null;
+            /** Telephone */
+            telephone: string | null;
+            /** Mobile */
+            mobile: string | null;
+            /** Linkedin Url */
+            linkedin_url: string | null;
+            /** Notes */
+            notes: string | null;
+            /** Record State */
+            record_state: string;
+            /** Next Action Due Date */
+            next_action_due_date: string | null;
+        };
         /** DomainPending */
         DomainPending: {
             /** Id */
@@ -432,10 +783,62 @@ export interface components {
             /** Created At */
             created_at: string;
         };
+        /** FollowUpIn */
+        FollowUpIn: {
+            /**
+             * Action Type
+             * @default Task
+             */
+            action_type: string;
+            /** Description */
+            description: string;
+            /**
+             * Due Date
+             * Format: date
+             */
+            due_date: string;
+            /** Due Time */
+            due_time?: string | null;
+            /**
+             * Priority
+             * @default Normal
+             */
+            priority: string;
+            /** Owner User Id */
+            owner_user_id?: string | null;
+            /** Contact Id */
+            contact_id?: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HandoverOut */
+        HandoverOut: {
+            /** Id */
+            id: string;
+            /** Company Id */
+            company_id: string;
+            /** Company Name */
+            company_name: string;
+            /** Reason */
+            reason: string;
+            /** Created At */
+            created_at: string;
+        };
+        /** HomeOut */
+        HomeOut: {
+            /** Timezone */
+            timezone: string;
+            /** Today */
+            today: string;
+            /** Actions */
+            actions: components["schemas"]["ActionOut"][];
+            /** Attention Count */
+            attention_count: number;
+            /** Handovers */
+            handovers: components["schemas"]["HandoverOut"][];
         };
         /** InviteIn */
         InviteIn: {
@@ -1186,6 +1589,551 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_contacts_v1_contacts_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                q?: string;
+                record_state?: string;
+            };
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_contact_v1_contacts_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_contact_v1_contacts__contact_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path: {
+                contact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_contact_v1_contacts__contact_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path: {
+                contact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_activities_v1_activities_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                contact_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_activity_v1_activities_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActivityIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_activity_v1_activities__activity_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path: {
+                activity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_activity_v1_activities__activity_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path: {
+                activity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActivityIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_actions_v1_actions_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                contact_id?: string | null;
+                horizon?: string;
+                scope?: string;
+            };
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_action_v1_actions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_action_v1_actions__action_id__complete_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path: {
+                action_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_action_v1_actions__action_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path: {
+                action_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    home_v1_home_get: {
+        parameters: {
+            query?: {
+                horizon?: string;
+                scope?: string;
+            };
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HomeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ack_handover_v1_handovers__handover_id__ack_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path: {
+                handover_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ack_all_handovers_v1_handovers_ack_all_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
                 };
             };
             /** @description Validation Error */
