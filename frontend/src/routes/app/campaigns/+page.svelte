@@ -38,7 +38,6 @@
 
 <section class="wrap">
 	<div class="toolbar">
-		<h1>Campaigns</h1>
 		<a href="/app/campaigns/new">Add campaign</a>
 	</div>
 	{#if error}
@@ -67,11 +66,9 @@
 	.toolbar {
 		display: flex;
 		align-items: center;
+		justify-content: flex-end;
 		gap: 0.75rem;
 		margin-bottom: 1rem;
-	}
-	h1 {
-		margin: 0 auto 0 0;
 	}
 	.toolbar a {
 		font: inherit;

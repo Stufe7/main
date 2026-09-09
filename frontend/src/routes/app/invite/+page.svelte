@@ -57,7 +57,6 @@
 </svelte:head>
 
 <section class="card">
-	<h1>Invite colleague</h1>
 	<p>Email domain must already be an Approved domain for this entity.</p>
 	{#if error}
 		<p class="error">{error}</p>

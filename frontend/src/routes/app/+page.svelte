@@ -91,7 +91,6 @@
 
 <section class="wrap">
 	<div class="toolbar">
-		<h1>Work queue</h1>
 		<select bind:value={horizon} onchange={() => load()}>
 			<option value="overdue">Overdue</option>
 			<option value="today">Today</option>
@@ -167,9 +166,6 @@
 		flex-wrap: wrap;
 		gap: 0.6rem;
 		align-items: center;
-	}
-	h1 {
-		margin: 0 auto 0 0;
 	}
 	.list {
 		list-style: none;

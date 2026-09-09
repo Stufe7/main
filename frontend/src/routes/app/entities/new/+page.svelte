@@ -53,7 +53,6 @@
 </svelte:head>
 
 <section class="card">
-	<h1>Create another entity</h1>
 	<p>Uses the same identity check as signup. This login becomes Entity Admin of the new tenant.</p>
 	{#if error}
 		<p class="error">{error}</p>

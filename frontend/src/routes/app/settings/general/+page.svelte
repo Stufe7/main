@@ -162,7 +162,6 @@
 </svelte:head>
 
 <section class="wrap">
-	<h1>General</h1>
 	<p>
 		Display name and legal name are shown here. Changes wait for Platform Super-Admin review. Invites
 		only succeed for Approved domains. The primary domain cannot be removed. After a new domain is

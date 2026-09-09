@@ -143,7 +143,6 @@
 </svelte:head>
 
 <section class="wrap">
-	<h1>Users</h1>
 	<p>Entity Admins can change role, deactivate with a split handover, reactivate, or remove.</p>
 	{#if error}
 		<p class="error">{error}</p>

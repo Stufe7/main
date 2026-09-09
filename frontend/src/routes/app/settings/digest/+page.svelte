@@ -67,7 +67,6 @@
 </svelte:head>
 
 <section class="wrap">
-	<h1>Action Digest</h1>
 	<p>
 		Your timezone defines Today, Overdue, This Week, and when the digest is sent. Daily covers today,
 		Weekly the current Monday–Sunday week, Monthly the calendar month. Off sends nothing.

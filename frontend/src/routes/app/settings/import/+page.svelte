@@ -82,7 +82,6 @@
 </svelte:head>
 
 <section class="wrap">
-	<h1>CSV import</h1>
 	<p>Use the template. Duplicates are never merged automatically.</p>
 	<p><a href={templateUrl}>Download template</a></p>
 	{#if error}

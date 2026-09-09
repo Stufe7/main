@@ -71,7 +71,6 @@
 </svelte:head>
 
 <section class="wrap">
-	<h1>Account</h1>
 	<p>
 		Email change is all-or-nothing across every remaining membership. The new domain must already be
 		Approved for each of those entities. A colliding address is never merged — contact

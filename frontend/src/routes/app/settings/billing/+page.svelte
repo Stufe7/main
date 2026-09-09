@@ -39,7 +39,6 @@
 </svelte:head>
 
 <section class="wrap">
-	<h1>Billing</h1>
 	<p>Plan status for this entity. Invoicing is not in this release.</p>
 	{#if error}
 		<p class="error">{error}</p>

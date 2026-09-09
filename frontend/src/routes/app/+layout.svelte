@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { afterNavigate, goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { api, type SessionInfo } from '$lib/api/client';
 	import { auth, requireSession, signOut } from '$lib/auth/session.svelte';
@@ -9,6 +10,12 @@
 	let session = $state<SessionInfo | null>(null);
 	let currentEntity = $state('');
 	let menu = $state<HTMLDetailsElement | null>(null);
+	const path = $derived(page.url.pathname);
+
+	function navOn(href: string) {
+		if (href === '/app') return path === '/app' || path === '/app/';
+		return path === href || path.startsWith(`${href}/`);
+	}
 
 	onMount(() => {
 		function onDocClick(event: MouseEvent) {
@@ -69,17 +76,17 @@
 <div class="shell">
 	<header>
 		<a href="/app" class="brand"><img src="/stufe7-logo.svg" alt="Stufe7" /></a>
-		<nav>
-			<a href="/app">Home</a>
-			<a href="/app/companies">Companies</a>
-			<a href="/app/contacts">Contacts</a>
-			<a href="/app/activities">Activities</a>
-			<a href="/app/campaigns">Campaigns</a>
+		<nav aria-label="Main">
+			<a href="/app" class:on={navOn('/app')} aria-current={navOn('/app') ? 'page' : undefined}>Home</a>
+			<a href="/app/companies" class:on={navOn('/app/companies')} aria-current={navOn('/app/companies') ? 'page' : undefined}>Companies</a>
+			<a href="/app/contacts" class:on={navOn('/app/contacts')} aria-current={navOn('/app/contacts') ? 'page' : undefined}>Contacts</a>
+			<a href="/app/activities" class:on={navOn('/app/activities')} aria-current={navOn('/app/activities') ? 'page' : undefined}>Activities</a>
+			<a href="/app/campaigns" class:on={navOn('/app/campaigns')} aria-current={navOn('/app/campaigns') ? 'page' : undefined}>Campaigns</a>
 			{#if session?.platform_admin}
-				<a href="/platform/approvals">Approvals</a>
+				<a href="/platform/approvals" class:on={navOn('/platform/approvals')} aria-current={navOn('/platform/approvals') ? 'page' : undefined}>Approvals</a>
 			{/if}
 			{#if session?.privacy_operator}
-				<a href="/platform/privacy">Privacy</a>
+				<a href="/platform/privacy" class:on={navOn('/platform/privacy')} aria-current={navOn('/platform/privacy') ? 'page' : undefined}>Privacy</a>
 			{/if}
 		</nav>
 		<div class="end">
@@ -94,9 +101,9 @@
 				<details class="account" bind:this={menu}>
 					<summary>{auth.email}</summary>
 					<div class="menu">
-						<a href="/app/settings">Settings</a>
-						<a href="/app/invite">Invite</a>
-						<a href="/app/entities/new">New entity</a>
+						<a href="/app/settings" class:on={navOn('/app/settings')} aria-current={navOn('/app/settings') ? 'page' : undefined}>Settings</a>
+						<a href="/app/invite" class:on={navOn('/app/invite')} aria-current={navOn('/app/invite') ? 'page' : undefined}>Invite</a>
+						<a href="/app/entities/new" class:on={navOn('/app/entities/new')} aria-current={navOn('/app/entities/new') ? 'page' : undefined}>New entity</a>
 						<button type="button" onclick={leave}>Sign out</button>
 					</div>
 				</details>
@@ -129,9 +136,14 @@
 		gap: 0.75rem;
 	}
 	nav a {
-		color: #20265e;
+		color: #5b607a;
 		font-weight: 650;
 		text-decoration: none;
+		padding: 0.15rem 0;
+	}
+	nav a.on {
+		color: #20265e;
+		box-shadow: 0 2px 0 #20265e;
 	}
 	.end {
 		margin-left: auto;
@@ -188,6 +200,9 @@
 	.menu a:hover,
 	.menu button:hover {
 		background: #f6f7fb;
+	}
+	.menu a.on {
+		background: #f0f2f8;
 	}
 	select {
 		border: 1px solid #d5d8e6;

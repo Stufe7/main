@@ -37,7 +37,6 @@
 
 <section class="wrap">
 	<div class="toolbar">
-		<h1>Contacts</h1>
 		<form
 			onsubmit={(event) => {
 				event.preventDefault();
@@ -76,8 +75,8 @@
 		align-items: center;
 		margin-bottom: 1rem;
 	}
-	h1 {
-		margin: 0 auto 0 0;
+	.toolbar a {
+		margin-left: auto;
 	}
 	form {
 		display: flex;
