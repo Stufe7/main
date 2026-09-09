@@ -3,8 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.observability import CorrelationIdMiddleware, configure_logging
 from app.settings import settings
+from app.approvals import router as approvals_router
 from app.phase1a import prove_kernel
 from app.phase1b import prove_schema
+from app.signup import router as signup_router
 from app.spike1 import prove_auth_uid
 
 configure_logging()
@@ -24,6 +26,8 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+app.include_router(signup_router)
+app.include_router(approvals_router)
 
 
 @app.get("/health", tags=["ops"])

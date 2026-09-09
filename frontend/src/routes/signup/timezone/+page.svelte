@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { requireSession } from '$lib/auth/session.svelte';
-	import { readSignupDraft, writeSignupDraft } from '$lib/signup/draft';
+	import { api, type SignupComplete } from '$lib/api/client';
+	import { clearSignupDraft, readSignupDraft, writeSignupDraft } from '$lib/signup/draft';
 	import { countryNeedsExplicitZone, listTimeZones, suggestedTimeZone } from '$lib/signup/timezones';
 
 	let timezone = $state('');
@@ -26,8 +27,33 @@
 			return;
 		}
 		const draft = readSignupDraft();
-		if (draft) writeSignupDraft({ ...draft, timezone });
-		await goto('/app');
+		if (!draft) {
+			error = 'Signup details are missing. Start again from Sign up.';
+			return;
+		}
+		writeSignupDraft({ ...draft, timezone });
+		error = '';
+		try {
+			const result = await api<SignupComplete>('/v1/signup/complete', {
+				method: 'POST',
+				body: JSON.stringify({
+					first_name: draft.firstName,
+					last_name: draft.lastName,
+					company: draft.company,
+					country: draft.country,
+					company_url: draft.companyUrl,
+					timezone
+				})
+			});
+			if (result.status === 'provisioned') {
+				clearSignupDraft();
+				await goto('/app');
+				return;
+			}
+			await goto('/signup/pending');
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not finish signup.';
+		}
 	}
 </script>
 

@@ -13,7 +13,13 @@ major_version = 15
 [auth]
 enabled = true
 site_url = "http://localhost:5173"
-additional_redirect_urls = ["https://localhost:5173"]
+additional_redirect_urls = [
+  "https://localhost:5173",
+  "https://stufe7.com",
+  "https://stufe7.com/**",
+  "https://www.stufe7.com",
+  "https://www.stufe7.com/**",
+]
 enable_signup = true
 
 [auth.email]

@@ -44,6 +44,13 @@ BEGIN
       'app_has_active_membership',
       'app_authorize_membership',
       'app_user_entity_last_admin_guard',
+      'app_ensure_user',
+      'app_record_consent',
+      'app_provision_self_serve',
+      'app_create_registration_request',
+      'app_approve_registration',
+      'app_reject_registration',
+      'app_is_platform_admin',
       'hook_before_user_created'
     );
   IF definer_count <> 0 THEN
