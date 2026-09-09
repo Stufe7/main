@@ -310,8 +310,8 @@ BEGIN
     RAISE EXCEPTION 'user mismatch';
   END IF;
   IF NOT EXISTS (
-    SELECT 1 FROM public.user_entity
-    WHERE user_id = p_user AND entity_id = p_entity AND status = 'active'
+    SELECT 1 FROM public.user_entity ue
+    WHERE ue.user_id = p_user AND ue.entity_id = p_entity AND ue.status = 'active'
   ) THEN
     RAISE EXCEPTION 'no access to this entity';
   END IF;

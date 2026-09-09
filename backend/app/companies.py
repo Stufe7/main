@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from app.authn import Claims, bearer_claims, require_user_id
 from app.db import runtime_connection
-from app.tenant import bind_request, require_entity_id
+from app.tenant import bind_request, raise_pg, require_entity_id
 
 router = APIRouter(prefix="/v1", tags=["companies"])
 
@@ -68,7 +68,11 @@ def list_members(
 ) -> list[MemberOut]:
     with runtime_connection() as connection, connection.cursor() as cur:
         bind_request(cur, claims, entity_id)
-        cur.execute("select * from public.app_list_members(%s, %s)", (user_id, entity_id))
+        try:
+            cur.execute("select * from public.app_list_members(%s, %s)", (user_id, entity_id))
+            rows = cur.fetchall()
+        except Exception as exc:
+            raise_pg(exc)
         return [
             MemberOut(
                 user_id=str(row[0]),
@@ -78,7 +82,7 @@ def list_members(
                 role=row[4],
                 status=row[5],
             )
-            for row in cur.fetchall()
+            for row in rows
         ]
 
 
