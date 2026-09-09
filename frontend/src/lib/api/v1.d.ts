@@ -140,6 +140,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/platform/change-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Change Requests */
+        get: operations["list_change_requests_v1_platform_change_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/platform/change-requests/{request_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Change */
+        post: operations["approve_change_v1_platform_change_requests__request_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/platform/change-requests/{request_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Change */
+        post: operations["reject_change_v1_platform_change_requests__request_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/platform/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Weekly Stats */
+        get: operations["weekly_stats_v1_platform_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/platform/deny-health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Deny Health */
+        get: operations["deny_health_v1_platform_deny_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/invitations": {
         parameters: {
             query?: never;
@@ -305,6 +390,57 @@ export interface paths {
         put?: never;
         /** Request Domain */
         post: operations["request_domain_v1_domains_requests_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/domains/removals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request Removal */
+        post: operations["request_removal_v1_domains_removals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/domains/primary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request Primary */
+        post: operations["request_primary_v1_domains_primary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/entity/rename": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request Rename */
+        post: operations["request_rename_v1_entity_rename_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1064,6 +1200,31 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** ChangePending */
+        ChangePending: {
+            /** Id */
+            id: string;
+            /** Request Type */
+            request_type: string;
+            /** Entity Id */
+            entity_id: string;
+            /** Entity Name */
+            entity_name: string;
+            /** Summary */
+            summary: string;
+            /** Created At */
+            created_at: string;
+            /** Stale */
+            stale: boolean;
+        };
+        /** ChangeRejectIn */
+        ChangeRejectIn: {
+            /**
+             * Requester Feedback
+             * @default
+             */
+            requester_feedback: string;
+        };
         /** CompanyIn */
         CompanyIn: {
             /** Company Name */
@@ -1217,6 +1378,19 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** DenyHealth */
+        DenyHealth: {
+            /** Refreshed At */
+            refreshed_at: string | null;
+            /** Status */
+            status: string | null;
+            /** Source Version */
+            source_version: string | null;
+            /** Entry Count */
+            entry_count: number | null;
+            /** Error Summary */
+            error_summary: string | null;
+        };
         /** DigestIn */
         DigestIn: {
             /** Frequency */
@@ -1251,8 +1425,12 @@ export interface components {
         DomainRequestRow: {
             /** Id */
             id: string;
+            /** Request Type */
+            request_type: string;
             /** Domain */
-            domain: string;
+            domain?: string | null;
+            /** Summary */
+            summary?: string | null;
             /** Status */
             status: string;
             /** Requester Feedback */
@@ -1272,6 +1450,12 @@ export interface components {
             digest_send_local_time: string;
             /** Digest Frequency */
             digest_frequency: string;
+            /** Legal Name */
+            legal_name?: string | null;
+            /** Plan Code */
+            plan_code?: string | null;
+            /** Plan Status */
+            plan_status?: string | null;
         };
         /** ExecuteIn */
         ExecuteIn: {
@@ -1515,11 +1699,23 @@ export interface components {
             status: string;
             /** Created At */
             created_at: string;
+            /**
+             * Stale
+             * @default false
+             */
+            stale: boolean;
         };
         /** RejectIn */
         RejectIn: {
             /** Applicant Feedback */
             applicant_feedback: string;
+        };
+        /** RenameIn */
+        RenameIn: {
+            /** Entity Name */
+            entity_name: string;
+            /** Legal Name */
+            legal_name?: string | null;
         };
         /** ResponsibilityOut */
         ResponsibilityOut: {
@@ -1614,6 +1810,23 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** WeekStat */
+        WeekStat: {
+            /** Week Start */
+            week_start: string;
+            /** New Users */
+            new_users: number;
+            /** New Entities */
+            new_entities: number;
+            /** Active Entities */
+            active_entities: number;
+            /** Active Users */
+            active_users: number;
+            /** Actions Created */
+            actions_created: number;
+            /** From Rollup */
+            from_rollup: boolean;
         };
     };
     responses: never;
@@ -1887,6 +2100,173 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_change_requests_v1_platform_change_requests_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChangePending"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_change_v1_platform_change_requests__request_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_change_v1_platform_change_requests__request_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeRejectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    weekly_stats_v1_platform_stats_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeekStat"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deny_health_v1_platform_deny_health_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DenyHealth"];
                 };
             };
             /** @description Validation Error */
@@ -2268,6 +2648,114 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["DomainRequestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainRequestRow"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_removal_v1_domains_removals_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DomainRequestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainRequestRow"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_primary_v1_domains_primary_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DomainRequestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainRequestRow"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_rename_v1_entity_rename_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameIn"];
             };
         };
         responses: {

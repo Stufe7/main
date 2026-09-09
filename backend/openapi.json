@@ -487,6 +487,295 @@
         }
       }
     },
+    "/v1/platform/change-requests": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "summary": "List Change Requests",
+        "operationId": "list_change_requests_v1_platform_change_requests_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChangePending"
+                  },
+                  "title": "Response List Change Requests V1 Platform Change Requests Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform/change-requests/{request_id}/approve": {
+      "post": {
+        "tags": [
+          "platform"
+        ],
+        "summary": "Approve Change",
+        "operationId": "approve_change_v1_platform_change_requests__request_id__approve_post",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Request Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Approve Change V1 Platform Change Requests  Request Id  Approve Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform/change-requests/{request_id}/reject": {
+      "post": {
+        "tags": [
+          "platform"
+        ],
+        "summary": "Reject Change",
+        "operationId": "reject_change_v1_platform_change_requests__request_id__reject_post",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Request Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRejectIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Reject Change V1 Platform Change Requests  Request Id  Reject Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform/stats": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "summary": "Weekly Stats",
+        "operationId": "weekly_stats_v1_platform_stats_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WeekStat"
+                  },
+                  "title": "Response Weekly Stats V1 Platform Stats Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform/deny-health": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "summary": "Deny Health",
+        "operationId": "deny_health_v1_platform_deny_health_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DenyHealth"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/invitations": {
       "get": {
         "tags": [
@@ -1285,6 +1574,231 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/DomainRequestIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainRequestRow"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/domains/removals": {
+      "post": {
+        "tags": [
+          "domains"
+        ],
+        "summary": "Request Removal",
+        "operationId": "request_removal_v1_domains_removals_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "x-entity-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Entity-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DomainRequestIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainRequestRow"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/domains/primary": {
+      "post": {
+        "tags": [
+          "domains"
+        ],
+        "summary": "Request Primary",
+        "operationId": "request_primary_v1_domains_primary_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "x-entity-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Entity-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DomainRequestIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainRequestRow"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/entity/rename": {
+      "post": {
+        "tags": [
+          "domains"
+        ],
+        "summary": "Request Rename",
+        "operationId": "request_rename_v1_entity_rename_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "x-entity-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Entity-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameIn"
               }
             }
           }
@@ -5043,6 +5557,60 @@
         ],
         "title": "CancelIn"
       },
+      "ChangePending": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "request_type": {
+            "type": "string",
+            "title": "Request Type"
+          },
+          "entity_id": {
+            "type": "string",
+            "title": "Entity Id"
+          },
+          "entity_name": {
+            "type": "string",
+            "title": "Entity Name"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "request_type",
+          "entity_id",
+          "entity_name",
+          "summary",
+          "created_at",
+          "stale"
+        ],
+        "title": "ChangePending"
+      },
+      "ChangeRejectIn": {
+        "properties": {
+          "requester_feedback": {
+            "type": "string",
+            "title": "Requester Feedback",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "ChangeRejectIn"
+      },
       "CompanyIn": {
         "properties": {
           "company_name": {
@@ -5585,6 +6153,74 @@
         "type": "object",
         "title": "DeactivateIn"
       },
+      "DenyHealth": {
+        "properties": {
+          "refreshed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refreshed At"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "source_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version"
+          },
+          "entry_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Count"
+          },
+          "error_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refreshed_at",
+          "status",
+          "source_version",
+          "entry_count",
+          "error_summary"
+        ],
+        "title": "DenyHealth"
+      },
       "DigestIn": {
         "properties": {
           "frequency": {
@@ -5672,9 +6308,31 @@
             "type": "string",
             "title": "Id"
           },
-          "domain": {
+          "request_type": {
             "type": "string",
+            "title": "Request Type"
+          },
+          "domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Domain"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
           },
           "status": {
             "type": "string",
@@ -5699,7 +6357,7 @@
         "type": "object",
         "required": [
           "id",
-          "domain",
+          "request_type",
           "status",
           "requester_feedback",
           "created_at"
@@ -5727,6 +6385,39 @@
           "digest_frequency": {
             "type": "string",
             "title": "Digest Frequency"
+          },
+          "legal_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Name"
+          },
+          "plan_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Code"
+          },
+          "plan_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Status"
           }
         },
         "type": "object",
@@ -6496,6 +7187,11 @@
           "created_at": {
             "type": "string",
             "title": "Created At"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale",
+            "default": false
           }
         },
         "type": "object",
@@ -6524,6 +7220,31 @@
           "applicant_feedback"
         ],
         "title": "RejectIn"
+      },
+      "RenameIn": {
+        "properties": {
+          "entity_name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Entity Name"
+          },
+          "legal_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_name"
+        ],
+        "title": "RenameIn"
       },
       "ResponsibilityOut": {
         "properties": {
@@ -6840,6 +7561,49 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WeekStat": {
+        "properties": {
+          "week_start": {
+            "type": "string",
+            "title": "Week Start"
+          },
+          "new_users": {
+            "type": "integer",
+            "title": "New Users"
+          },
+          "new_entities": {
+            "type": "integer",
+            "title": "New Entities"
+          },
+          "active_entities": {
+            "type": "integer",
+            "title": "Active Entities"
+          },
+          "active_users": {
+            "type": "integer",
+            "title": "Active Users"
+          },
+          "actions_created": {
+            "type": "integer",
+            "title": "Actions Created"
+          },
+          "from_rollup": {
+            "type": "boolean",
+            "title": "From Rollup"
+          }
+        },
+        "type": "object",
+        "required": [
+          "week_start",
+          "new_users",
+          "new_entities",
+          "active_entities",
+          "active_users",
+          "actions_created",
+          "from_rollup"
+        ],
+        "title": "WeekStat"
       }
     }
   }

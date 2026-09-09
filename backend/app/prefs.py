@@ -18,6 +18,9 @@ class EntitySettingsOut(BaseModel):
     timezone: str
     digest_send_local_time: str
     digest_frequency: str
+    legal_name: str | None = None
+    plan_code: str | None = None
+    plan_status: str | None = None
 
 
 class DigestIn(BaseModel):
@@ -50,6 +53,9 @@ def get_entity_settings(
         timezone=row[2],
         digest_send_local_time=str(row[3])[:8],
         digest_frequency=row[4],
+        legal_name=row[5] if len(row) > 5 else None,
+        plan_code=row[6] if len(row) > 6 else None,
+        plan_status=row[7] if len(row) > 7 else None,
     )
 
 
