@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/public';
+import { activeEntityId } from '$lib/entity';
 import { getSupabase } from '$lib/supabase/client';
 
 export class ApiError extends Error {
@@ -23,6 +24,8 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 	const headers = new Headers(init.headers);
 	headers.set('Content-Type', 'application/json');
 	if (token) headers.set('Authorization', `Bearer ${token}`);
+	const entity = activeEntityId();
+	if (entity) headers.set('X-Entity-Id', entity);
 	const response = await fetch(`${base}${path}`, { ...init, headers });
 	if (!response.ok) {
 		let detail = response.statusText;
@@ -59,4 +62,26 @@ export type SignupComplete = {
 	request_id?: string | null;
 	reason_code?: string | null;
 	summary?: string | null;
+};
+
+export type Company = {
+	id: string;
+	company_name: string;
+	legal_name: string | null;
+	status: string;
+	record_state: string;
+	country: string | null;
+	website: string | null;
+	notes: string | null;
+	owner_user_id: string | null;
+	next_action_due_date: string | null;
+};
+
+export type Member = {
+	user_id: string;
+	email: string;
+	first_name: string | null;
+	last_name: string | null;
+	role: string;
+	status: string;
 };

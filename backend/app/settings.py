@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     terms_version: str = "2026-09-09"
     privacy_version: str = "2026-09-09"
+    sendgrid_api_key: str = ""
+    mail_from_updates: str = "updates@stufe7.com"
+    mail_reply_to_support: str = "support@stufe7.com"
+    mail_from_noreply: str = "noreply@stufe7.com"
+    mail_admin_to: str = "admin@stufe7.com"
+    public_app_url: str = "https://www.stufe7.com"
 
     @property
     def cors_origin_list(self) -> list[str]:

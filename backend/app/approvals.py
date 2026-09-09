@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from app.authn import Claims, bearer_claims, require_user_id
 from app.db import runtime_connection
 from app.signup import _runtime_claims
+from app.tenant import raise_pg
 
 router = APIRouter(prefix="/v1/platform", tags=["platform"])
 
@@ -89,5 +90,79 @@ def reject_registration(
             "select public.app_reject_registration(%s, %s, %s)",
             (request_id, user_id, body.applicant_feedback),
         )
+        connection.commit()
+    return {"status": "rejected"}
+
+
+class DomainPending(BaseModel):
+    id: str
+    entity_id: str
+    entity_name: str
+    domain: str
+    created_at: str
+
+
+class DomainRejectIn(BaseModel):
+    requester_feedback: str = Field(min_length=1)
+
+
+@router.get("/domain-requests", response_model=list[DomainPending])
+def list_domain_requests(
+    claims: Annotated[Claims, Depends(bearer_claims)],
+    user_id: Annotated[str, Depends(require_user_id)],
+) -> list[DomainPending]:
+    with runtime_connection() as connection, connection.cursor() as cur:
+        _runtime_claims(cur, claims)
+        try:
+            cur.execute("select * from public.app_list_pending_domain_requests(%s)", (user_id,))
+        except Exception as exc:
+            from app.tenant import pg_detail
+
+            raise HTTPException(status_code=403, detail=pg_detail(exc)) from exc
+        rows = cur.fetchall()
+    return [
+        DomainPending(
+            id=str(row[0]),
+            entity_id=str(row[1]),
+            entity_name=row[2],
+            domain=row[3] or "",
+            created_at=row[4].isoformat(),
+        )
+        for row in rows
+    ]
+
+
+@router.post("/domain-requests/{request_id}/approve")
+def approve_domain(
+    request_id: str,
+    claims: Annotated[Claims, Depends(bearer_claims)],
+    user_id: Annotated[str, Depends(require_user_id)],
+) -> dict[str, str]:
+    with runtime_connection() as connection, connection.cursor() as cur:
+        _runtime_claims(cur, claims)
+        try:
+            cur.execute("select public.app_approve_domain_addition(%s, %s)", (request_id, user_id))
+        except Exception as exc:
+            raise_pg(exc)
+        connection.commit()
+    return {"status": "approved"}
+
+
+@router.post("/domain-requests/{request_id}/reject")
+def reject_domain(
+    request_id: str,
+    body: DomainRejectIn,
+    claims: Annotated[Claims, Depends(bearer_claims)],
+    user_id: Annotated[str, Depends(require_user_id)],
+) -> dict[str, str]:
+    with runtime_connection() as connection, connection.cursor() as cur:
+        _runtime_claims(cur, claims)
+        try:
+            cur.execute(
+                "select public.app_reject_domain_addition(%s, %s, %s)",
+                (request_id, user_id, body.requester_feedback),
+            )
+        except Exception as exc:
+            raise_pg(exc)
         connection.commit()
     return {"status": "rejected"}

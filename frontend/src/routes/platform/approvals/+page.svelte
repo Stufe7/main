@@ -15,9 +15,19 @@
 		created_at: string;
 	};
 
+	type DomainRow = {
+		id: string;
+		entity_id: string;
+		entity_name: string;
+		domain: string;
+		created_at: string;
+	};
+
 	let rows = $state<Row[]>([]);
+	let domainRows = $state<DomainRow[]>([]);
 	let error = $state('');
 	let feedback = $state<Record<string, string>>({});
+	let domainFeedback = $state<Record<string, string>>({});
 
 	onMount(async () => {
 		const email = await requireSession();
@@ -32,6 +42,7 @@
 				return;
 			}
 			rows = await api<Row[]>('/v1/platform/registrations');
+			domainRows = await api<DomainRow[]>('/v1/platform/domain-requests');
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not load approvals.';
 		}
@@ -44,6 +55,34 @@
 			rows = rows.filter((row) => row.id !== id);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Approve failed.';
+		}
+	}
+
+	async function approveDomain(id: string) {
+		error = '';
+		try {
+			await api(`/v1/platform/domain-requests/${id}/approve`, { method: 'POST' });
+			domainRows = domainRows.filter((row) => row.id !== id);
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Approve failed.';
+		}
+	}
+
+	async function rejectDomain(id: string) {
+		const text = (domainFeedback[id] || '').trim();
+		if (!text) {
+			error = 'Requester feedback is required to reject a domain addition.';
+			return;
+		}
+		error = '';
+		try {
+			await api(`/v1/platform/domain-requests/${id}/reject`, {
+				method: 'POST',
+				body: JSON.stringify({ requester_feedback: text })
+			});
+			domainRows = domainRows.filter((row) => row.id !== id);
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Reject failed.';
 		}
 	}
 
@@ -94,6 +133,24 @@
 					<textarea bind:value={feedback[row.id]}></textarea>
 				</label>
 				<button type="button" class="ghost" onclick={() => reject(row.id)}>Reject</button>
+			</div>
+		</article>
+	{/each}
+	<h1>Domain additions</h1>
+	{#if !domainRows.length && !error}
+		<p>No pending domain additions.</p>
+	{/if}
+	{#each domainRows as row (row.id)}
+		<article class="card">
+			<h2>{row.domain}</h2>
+			<p>{row.entity_name}</p>
+			<div class="actions">
+				<button type="button" class="solid" onclick={() => approveDomain(row.id)}>Approve</button>
+				<label>
+					Requester feedback
+					<textarea bind:value={domainFeedback[row.id]}></textarea>
+				</label>
+				<button type="button" class="ghost" onclick={() => rejectDomain(row.id)}>Reject</button>
 			</div>
 		</article>
 	{/each}

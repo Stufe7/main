@@ -6,11 +6,12 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, HttpUrl
 
-from app.authn import Claims, bearer_claims, claims_json, require_user_id
+from app.authn import Claims, bearer_claims, require_user_id
 from app.db import runtime_connection
 from app.identity import email_domain, registrable_domain, verify_company_identity
-from app.runtime import _assume_runtime
+from app.mail import send_admin_alert
 from app.settings import settings
+from app.tenant import bind_request
 
 router = APIRouter(prefix="/v1", tags=["signup"])
 
@@ -49,8 +50,7 @@ class SessionOut(BaseModel):
 
 
 def _runtime_claims(cur, claims: Claims) -> None:
-    _assume_runtime(cur)
-    cur.execute("select set_config('request.jwt.claims', %s, true)", (claims_json(claims),))
+    bind_request(cur, claims)
 
 
 @router.post("/signup/complete", response_model=SignupCompleteOut)
@@ -128,6 +128,10 @@ def signup_complete(
         )
         request_id = str(cur.fetchone()[0])
         connection.commit()
+        send_admin_alert(
+            "Registration review required",
+            f"{email} / {body.company.strip()} / {verdict.reason_code}\n{verdict.summary or ''}",
+        )
         return SignupCompleteOut(
             status="pending_review",
             request_id=request_id,
