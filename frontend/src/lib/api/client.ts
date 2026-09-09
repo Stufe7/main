@@ -48,6 +48,15 @@ export type Membership = {
 	status: string;
 };
 
+export type Member = {
+	user_id: string;
+	email: string;
+	first_name: string | null;
+	last_name: string | null;
+	role: string;
+	status: string;
+};
+
 export type SessionInfo = {
 	user_id: string;
 	email: string | null;

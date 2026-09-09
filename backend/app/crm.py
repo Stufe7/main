@@ -114,6 +114,10 @@ class HomeOut(BaseModel):
     handovers: list[HandoverOut]
 
 
+class AckSelectedIn(BaseModel):
+    ids: list[str] = Field(default_factory=list)
+
+
 def _activity_row(row: tuple) -> ActivityOut:
     return ActivityOut(
         id=str(row[0]),
@@ -667,6 +671,30 @@ def ack_all_handovers(
             where entity_id = %s and to_user_id = %s and status = 'Pending Review'
             """,
             (user_id, entity_id, user_id),
+        )
+        connection.commit()
+    return {"status": "reviewed"}
+
+
+@router.post("/handovers/ack-selected")
+def ack_selected_handovers(
+    body: AckSelectedIn,
+    claims: Annotated[Claims, Depends(bearer_claims)],
+    user_id: Annotated[str, Depends(require_user_id)],
+    entity_id: Annotated[str, Depends(require_entity_id)],
+) -> dict[str, str]:
+    if not body.ids:
+        return {"status": "reviewed"}
+    with runtime_connection() as connection, connection.cursor() as cur:
+        bind_request(cur, claims, entity_id)
+        cur.execute(
+            """
+            update public.company_handover
+            set status = 'Reviewed', reviewed_by_user_id = %s, reviewed_at = now()
+            where entity_id = %s and to_user_id = %s and status = 'Pending Review'
+              and id = any(%s::uuid[])
+            """,
+            (user_id, entity_id, user_id, body.ids),
         )
         connection.commit()
     return {"status": "reviewed"}

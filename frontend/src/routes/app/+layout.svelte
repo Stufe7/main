@@ -8,6 +8,9 @@
 	let { children } = $props();
 	let session = $state<SessionInfo | null>(null);
 	let currentEntity = $state('');
+	const currentRole = $derived(
+		session?.memberships.find((row) => row.entity_id === currentEntity)?.role || ''
+	);
 
 	onMount(async () => {
 		const email = await requireSession();
@@ -50,7 +53,11 @@
 			<a href="/app">Home</a>
 			<a href="/app/companies">Companies</a>
 			<a href="/app/contacts">Contacts</a>
+			<a href="/app/activities">Activities</a>
 			<a href="/app/invite">Invite</a>
+			{#if currentRole === 'Entity Admin'}
+				<a href="/app/settings/users">Users</a>
+			{/if}
 			<a href="/app/settings/domains">Domains</a>
 			<a href="/app/entities/new">New entity</a>
 			{#if session?.platform_admin}

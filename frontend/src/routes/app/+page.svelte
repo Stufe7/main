@@ -10,6 +10,7 @@
 	let scope = $state('my');
 	let error = $state('');
 	let completeId = $state('');
+	let selected = $state<string[]>([]);
 	let outcome = $state('');
 	let nextDue = $state('');
 	let nextDesc = $state('');
@@ -43,6 +44,16 @@
 
 	async function ackAll() {
 		await api('/v1/handovers/ack-all', { method: 'POST' });
+		selected = [];
+		await load();
+	}
+
+	async function ackSelected() {
+		await api('/v1/handovers/ack-selected', {
+			method: 'POST',
+			body: JSON.stringify({ ids: selected })
+		});
+		selected = [];
 		await load();
 	}
 
@@ -110,11 +121,17 @@
 	{#if home?.handovers.length}
 		<section class="card">
 			<h2>Handovers</h2>
+			<button type="button" class="ghost" onclick={ackSelected} disabled={!selected.length}>
+				Review selected
+			</button>
 			<button type="button" class="ghost" onclick={ackAll}>Review all</button>
 			{#each home.handovers as row (row.id)}
 				<p>
-					<a href={`/app/companies/${row.company_id}`}>{row.company_name}</a>
-					{row.reason}
+					<label>
+						<input type="checkbox" bind:group={selected} value={row.id} />
+						<a href={`/app/companies/${row.company_id}`}>{row.company_name}</a>
+						{row.reason}
+					</label>
 					<button type="button" onclick={() => ack(row.id)}>Review</button>
 				</p>
 			{/each}

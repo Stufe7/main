@@ -22,6 +22,7 @@ def bind_request(cur, claims: Claims, entity_id: str | None = None) -> None:
     if not row or not row[0]:
         raise HTTPException(status_code=403, detail="No access to this entity")
     cur.execute("select set_config('app.active_entity_id', %s, true)", (entity_id,))
+    cur.execute("select public.app_touch_last_access(%s, %s)", (str(claims.get("sub")), entity_id))
 
 
 def require_entity_id(

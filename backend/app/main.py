@@ -9,6 +9,7 @@ from app.contacts import router as contacts_router
 from app.crm import router as crm_router
 from app.domains import router as domains_router
 from app.invitations import router as invitations_router
+from app.members import router as members_router
 from app.phase1a import prove_kernel
 from app.phase1b import prove_schema
 from app.signup import router as signup_router
@@ -34,6 +35,7 @@ app.add_middleware(
 app.include_router(signup_router)
 app.include_router(approvals_router)
 app.include_router(invitations_router)
+app.include_router(members_router)
 app.include_router(domains_router)
 app.include_router(companies_router)
 app.include_router(contacts_router)
