@@ -50,6 +50,10 @@ AS $$
     AND membership.entity_id = p_entity;
 $$;
 
+-- Hosted SQL Editor / migration roles are not members of app_authz.
+-- ALTER OWNER requires SET ROLE on the new owner. Do not grant this to app_runtime.
+GRANT app_authz TO CURRENT_USER;
+
 ALTER FUNCTION public.app_has_active_membership(uuid, uuid) OWNER TO app_authz;
 ALTER FUNCTION public.app_authorize_membership(uuid, uuid) OWNER TO app_authz;
 
@@ -62,5 +66,15 @@ CREATE POLICY spike1_membership_isolation
   ON public.spike1_membership
   FOR ALL
   TO app_runtime
-  USING (public.app_has_active_membership(auth.uid(), entity_id))
-  WITH CHECK (public.app_has_active_membership(auth.uid(), entity_id));
+  USING (
+    public.app_has_active_membership(
+      (nullif(current_setting('request.jwt.claims', true), '')::json ->> 'sub')::uuid,
+      entity_id
+    )
+  )
+  WITH CHECK (
+    public.app_has_active_membership(
+      (nullif(current_setting('request.jwt.claims', true), '')::json ->> 'sub')::uuid,
+      entity_id
+    )
+  );

@@ -77,6 +77,52 @@
           }
         }
       }
+    },
+    "/v1/ops/phase1a": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Phase1A",
+        "operationId": "phase1a_v1_ops_phase1a_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Phase1A V1 Ops Phase1A Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/phase1b": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Phase1B",
+        "operationId": "phase1b_v1_ops_phase1b_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Phase1B V1 Ops Phase1B Get"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

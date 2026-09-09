@@ -1,7 +1,9 @@
-"""Prove Spike 1: auth.uid() under app_runtime + set_config, and SET ROLE app_authz fails.
+"""Prove Spike 1: spec 17 claim-read under app_runtime + set_config.
 
 Env:
-  DATABASE_URL  transaction-pooler URI as app_runtime (never postgres/service_role)
+  DATABASE_URL  transaction-pooler URI. Hosted Supavisor cannot log in as
+  app_runtime; use postgres.PROJECT_REF on port 6543. The script then
+  SET LOCAL ROLE app_runtime (never authenticated).
 """
 
 from __future__ import annotations
@@ -22,18 +24,18 @@ def main() -> None:
     print(json.dumps(result, indent=2))
 
     if result.get("current_user") != "app_runtime":
-        raise SystemExit(f"FAIL: connected as {result.get('current_user')}, expected app_runtime")
-    if result.get("auth_uid") is None:
+        raise SystemExit(f"FAIL: current_user is {result.get('current_user')}, expected app_runtime")
+    if result.get("request_uid") is None:
         raise SystemExit(
-            "FAIL: auth.uid() is NULL. Stop Phase 1A. Revise spec 17 to read "
-            "current_setting('request.jwt.claims', true)::json ->> 'sub'."
+            "FAIL: spec 17 claim-read is NULL. Stop Phase 1A. "
+            "set_config('request.jwt.claims') did not yield a sub."
         )
-    if not result.get("matches_sub"):
-        raise SystemExit("FAIL: auth.uid() did not match the configured sub")
+    if not result.get("request_uid_matches_sub"):
+        raise SystemExit("FAIL: spec 17 claim-read did not match the configured sub")
     if not result.get("set_role_app_authz_denied"):
         raise SystemExit("FAIL: app_runtime was able to SET ROLE app_authz")
 
-    print("PASS: auth.uid() resolves under app_runtime; SET ROLE app_authz is denied")
+    print("PASS: request.jwt.claims sub resolves under app_runtime; SET ROLE app_authz is denied")
 
 
 if __name__ == "__main__":

@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.observability import CorrelationIdMiddleware, configure_logging
 from app.settings import settings
+from app.phase1a import prove_kernel
+from app.phase1b import prove_schema
 from app.spike1 import prove_auth_uid
 
 configure_logging()
@@ -41,3 +43,21 @@ def spike1() -> dict[str, object]:
     if not settings.database_url:
         raise HTTPException(status_code=503, detail="DATABASE_URL is not set")
     return prove_auth_uid()
+
+
+@app.get("/v1/ops/phase1a", tags=["ops"])
+def phase1a() -> dict[str, object]:
+    if settings.app_env == "production":
+        raise HTTPException(status_code=404, detail="Not found")
+    if not settings.database_url:
+        raise HTTPException(status_code=503, detail="DATABASE_URL is not set")
+    return prove_kernel()
+
+
+@app.get("/v1/ops/phase1b", tags=["ops"])
+def phase1b() -> dict[str, object]:
+    if settings.app_env == "production":
+        raise HTTPException(status_code=404, detail="Not found")
+    if not settings.database_url:
+        raise HTTPException(status_code=503, detail="DATABASE_URL is not set")
+    return prove_schema()
