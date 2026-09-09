@@ -14,18 +14,33 @@
 	import { requireSession } from '$lib/auth/session.svelte';
 	import { ensureActiveEntity } from '$lib/entity';
 
+	type Campaign = { id: string; name: string; status: string };
+	type Membership = { id: string; name: string; status: string; membership_status: string };
+
 	const companyId = $derived(page.params.id);
 	let row = $state<Company | null>(null);
 	let members = $state<Member[]>([]);
 	let contacts = $state<Contact[]>([]);
 	let activities = $state<Activity[]>([]);
 	let actions = $state<ActionItem[]>([]);
+	let campaigns = $state<Campaign[]>([]);
+	let memberships = $state<Membership[]>([]);
+	let pickCampaign = $state('');
 	let error = $state('');
+	let info = $state('');
 	let busy = $state(false);
 	let loading = $state(true);
 	let subject = $state('');
 	let nextDue = $state('');
 	let nextDesc = $state('');
+
+	const addableCampaigns = $derived(
+		campaigns.filter(
+			(item) =>
+				(item.status === 'Planned' || item.status === 'Active') &&
+				!memberships.some((row) => row.id === item.id)
+		)
+	);
 
 	onMount(async () => {
 		if (!(await requireSession())) {
@@ -54,6 +69,15 @@
 			} catch (err) {
 				error = err instanceof Error ? err.message : 'Could not load company extras.';
 			}
+			try {
+				[campaigns, memberships] = await Promise.all([
+					api<Campaign[]>('/v1/campaigns'),
+					api<Membership[]>(`/v1/companies/${id}/campaigns`)
+				]);
+			} catch {
+				campaigns = [];
+				memberships = [];
+			}
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not load company.';
 		} finally {
@@ -66,6 +90,7 @@
 		if (!row) return;
 		busy = true;
 		error = '';
+		info = '';
 		try {
 			row = await api<Company>(`/v1/companies/${companyId}`, {
 				method: 'PATCH',
@@ -80,6 +105,7 @@
 					record_state: row.record_state
 				})
 			});
+			info = 'Company saved.';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Save failed.';
 		} finally {
@@ -92,6 +118,7 @@
 		if (!row) return;
 		busy = true;
 		error = '';
+		info = '';
 		try {
 			const body: Record<string, unknown> = {
 				company_id: row.id,
@@ -111,6 +138,7 @@
 			nextDesc = '';
 			activities = await api<Activity[]>(`/v1/activities?company_id=${companyId}`);
 			actions = await api<ActionItem[]>(`/v1/actions?company_id=${companyId}&horizon=open&scope=team`);
+			info = 'Activity logged.';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not save activity.';
 		} finally {
@@ -122,6 +150,28 @@
 		if (!row) return;
 		row.record_state = row.record_state === 'Archived' ? 'Active' : 'Archived';
 		await save(new Event('submit'));
+	}
+
+	async function addToCampaign(event: Event) {
+		event.preventDefault();
+		if (!pickCampaign || !companyId) return;
+		busy = true;
+		error = '';
+		info = '';
+		try {
+			await api(`/v1/campaigns/${pickCampaign}/companies`, {
+				method: 'POST',
+				body: JSON.stringify({ company_ids: [companyId] })
+			});
+			const chosen = campaigns.find((item) => item.id === pickCampaign);
+			pickCampaign = '';
+			memberships = await api<Membership[]>(`/v1/companies/${companyId}/campaigns`);
+			info = chosen ? `Added to ${chosen.name}.` : 'Added to campaign.';
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not add to campaign.';
+		} finally {
+			busy = false;
+		}
 	}
 </script>
 
@@ -136,6 +186,9 @@
 	{/if}
 	{#if error}
 		<p class="error">{error}</p>
+	{/if}
+	{#if info}
+		<p class="info">{info}</p>
 	{/if}
 	{#if row}
 		<form onsubmit={save}>
@@ -169,6 +222,36 @@
 			</div>
 		</form>
 		<p><a href={`/app/contacts/new?company=${row.id}`}>Add contact</a></p>
+		<h2>Campaigns</h2>
+		{#if memberships.length}
+			<ul>
+				{#each memberships as item (item.id)}
+					<li>
+						<a href={`/app/campaigns/${item.id}`}>{item.name}</a>
+						· {item.status} · {item.membership_status}
+					</li>
+				{/each}
+			</ul>
+		{:else}
+			<p class="muted">Not on a campaign yet.</p>
+		{/if}
+		{#if addableCampaigns.length}
+			<form onsubmit={addToCampaign}>
+				<label>Add to campaign
+					<select bind:value={pickCampaign} required>
+						<option value="">Select…</option>
+						{#each addableCampaigns as item (item.id)}
+							<option value={item.id}>{item.name}</option>
+						{/each}
+					</select>
+				</label>
+				<button type="submit" disabled={busy}>Add to campaign</button>
+			</form>
+		{:else if campaigns.some((item) => item.status === 'Planned' || item.status === 'Active')}
+			<p class="muted">This company is already on every Planned or Active campaign.</p>
+		{:else}
+			<p class="muted">Create a Planned or Active campaign first, then add this company to it.</p>
+		{/if}
 		<h2>Contacts</h2>
 		<ul>
 			{#each contacts as person (person.id)}
@@ -251,11 +334,21 @@
 		color: #20265e;
 		border: 1px solid #20265e;
 	}
+	.error,
+	.info {
+		padding: 0.65rem;
+		border-radius: 0.6rem;
+	}
 	.error {
 		background: #fde8e8;
 		color: #8a1f1f;
-		padding: 0.65rem;
-		border-radius: 0.6rem;
+	}
+	.info {
+		background: #eef7f1;
+		color: #1e5c3a;
+	}
+	.muted {
+		color: #5b607a;
 	}
 	a {
 		color: #20265e;

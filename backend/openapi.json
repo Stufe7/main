@@ -2224,6 +2224,84 @@
         }
       }
     },
+    "/v1/companies/{company_id}/campaigns": {
+      "get": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "List Company Campaigns",
+        "operationId": "list_company_campaigns_v1_companies__company_id__campaigns_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "x-entity-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Entity-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyCampaignOut"
+                  },
+                  "title": "Response List Company Campaigns V1 Companies  Company Id  Campaigns Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/contacts": {
       "get": {
         "tags": [
@@ -5610,6 +5688,34 @@
         },
         "type": "object",
         "title": "ChangeRejectIn"
+      },
+      "CompanyCampaignOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "membership_status": {
+            "type": "string",
+            "title": "Membership Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "membership_status"
+        ],
+        "title": "CompanyCampaignOut"
       },
       "CompanyIn": {
         "properties": {

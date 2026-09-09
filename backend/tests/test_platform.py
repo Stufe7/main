@@ -40,3 +40,7 @@ def test_entity_change_routes_require_session() -> None:
     assert (
         client.post("/v1/entity/rename", json={"entity_name": "Probe"}).status_code == 401
     )
+
+
+def test_company_campaigns_require_session() -> None:
+    assert client.get(f"/v1/companies/{PROBE}/campaigns").status_code == 401

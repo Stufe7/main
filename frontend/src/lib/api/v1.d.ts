@@ -500,6 +500,23 @@ export interface paths {
         patch: operations["patch_company_v1_companies__company_id__patch"];
         trace?: never;
     };
+    "/v1/companies/{company_id}/campaigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Company Campaigns */
+        get: operations["list_company_campaigns_v1_companies__company_id__campaigns_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/contacts": {
         parameters: {
             query?: never;
@@ -1224,6 +1241,17 @@ export interface components {
              * @default
              */
             requester_feedback: string;
+        };
+        /** CompanyCampaignOut */
+        CompanyCampaignOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+            /** Membership Status */
+            membership_status: string;
         };
         /** CompanyIn */
         CompanyIn: {
@@ -2942,6 +2970,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_company_campaigns_v1_companies__company_id__campaigns_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-entity-id"?: string | null;
+            };
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyCampaignOut"][];
                 };
             };
             /** @description Validation Error */

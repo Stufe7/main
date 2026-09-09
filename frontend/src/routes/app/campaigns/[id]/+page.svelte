@@ -32,15 +32,16 @@
 	let campaign = $state<Campaign | null>(null);
 	let members = $state<Member[]>([]);
 	let companies = $state<Row[]>([]);
-	let matches = $state<Company[]>([]);
-	let selected = $state<string[]>([]);
-	let q = $state('');
-	let country = $state('SG');
+	let catalog = $state<Company[]>([]);
+	let addCompanyId = $state('');
 	let error = $state('');
+	let info = $state('');
 	let due = $state('');
 	let nextDesc = $state('');
 	let actionCompany = $state('');
 	let cancelOpen = $state(false);
+	let busy = $state(false);
+	let filter = $state('');
 
 	const nameOf = (id: string | null) => {
 		if (!id) return 'Unassigned';
@@ -48,12 +49,24 @@
 		return member ? member.email : id.slice(0, 8);
 	};
 
+	const available = $derived(
+		catalog.filter((row) => {
+			if (companies.some((item) => item.company_id === row.id)) return false;
+			const needle = filter.trim().toLowerCase();
+			if (!needle) return true;
+			return row.company_name.toLowerCase().includes(needle);
+		})
+	);
+
 	async function load() {
 		const id = campaignId;
 		if (!id) return;
 		campaign = await api<Campaign>(`/v1/campaigns/${id}`);
+		if (campaign.start_date) campaign.start_date = campaign.start_date.slice(0, 10);
+		if (campaign.end_date) campaign.end_date = campaign.end_date.slice(0, 10);
 		members = await api<Member[]>('/v1/members');
 		companies = await api<Row[]>(`/v1/campaigns/${id}/companies`);
+		catalog = await api<Company[]>('/v1/companies');
 	}
 
 	onMount(async () => {
@@ -65,6 +78,9 @@
 		ensureActiveEntity(session.memberships);
 		try {
 			await load();
+			if (page.url.searchParams.get('saved') === '1') {
+				info = 'Campaign saved.';
+			}
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not load campaign.';
 		}
@@ -72,8 +88,10 @@
 
 	async function save(event: Event) {
 		event.preventDefault();
-		if (!campaign) return;
+		if (!campaign || busy) return;
 		error = '';
+		info = '';
+		busy = true;
 		try {
 			await api(`/v1/campaigns/${campaign.id}`, {
 				method: 'PATCH',
@@ -89,48 +107,66 @@
 				})
 			});
 			await load();
+			info = 'Campaign saved.';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Save failed.';
+		} finally {
+			busy = false;
 		}
 	}
 
-	async function search() {
-		const params = new URLSearchParams();
-		if (q.trim()) params.set('q', q.trim());
-		if (country.trim()) params.set('country', country.trim());
-		matches = await api<Company[]>(`/v1/companies?${params.toString()}`);
-		selected = matches.map((row) => row.id);
-	}
-
-	async function addSelected() {
-		if (!selected.length) return;
-		await api(`/v1/campaigns/${campaignId}/companies`, {
-			method: 'POST',
-			body: JSON.stringify({ company_ids: selected })
-		});
-		selected = [];
-		await load();
+	async function addCompany(event: Event) {
+		event.preventDefault();
+		if (!addCompanyId) return;
+		error = '';
+		info = '';
+		try {
+			await api(`/v1/campaigns/${campaignId}/companies`, {
+				method: 'POST',
+				body: JSON.stringify({ company_ids: [addCompanyId] })
+			});
+			const added = catalog.find((row) => row.id === addCompanyId);
+			addCompanyId = '';
+			filter = '';
+			await load();
+			info = added ? `${added.company_name} added to this campaign.` : 'Company added to this campaign.';
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not add company.';
+		}
 	}
 
 	async function removeCompany(companyId: string) {
-		await api(`/v1/campaigns/${campaignId}/companies/${companyId}`, {
-			method: 'PATCH',
-			body: JSON.stringify({ record_state: 'Archived' })
-		});
-		await load();
+		error = '';
+		info = '';
+		try {
+			await api(`/v1/campaigns/${campaignId}/companies/${companyId}`, {
+				method: 'PATCH',
+				body: JSON.stringify({ record_state: 'Archived' })
+			});
+			await load();
+			info = 'Company removed from this campaign.';
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not remove company.';
+		}
 	}
 
 	async function setStatus(companyId: string, status: string) {
-		await api(`/v1/campaigns/${campaignId}/companies/${companyId}`, {
-			method: 'PATCH',
-			body: JSON.stringify({ status })
-		});
-		await load();
+		error = '';
+		try {
+			await api(`/v1/campaigns/${campaignId}/companies/${companyId}`, {
+				method: 'PATCH',
+				body: JSON.stringify({ status })
+			});
+			await load();
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not update status.';
+		}
 	}
 
 	async function addAction(event: Event) {
 		event.preventDefault();
 		error = '';
+		info = '';
 		try {
 			await api('/v1/actions', {
 				method: 'POST',
@@ -146,6 +182,7 @@
 			nextDesc = '';
 			due = '';
 			await load();
+			info = 'Action added.';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Action failed.';
 		}
@@ -159,6 +196,9 @@
 <section class="wrap">
 	{#if error}
 		<p class="error">{error}</p>
+	{/if}
+	{#if info}
+		<p class="info">{info}</p>
 	{/if}
 	{#if campaign}
 		<form class="card" onsubmit={save}>
@@ -178,23 +218,29 @@
 				<input type="checkbox" bind:checked={cancelOpen} />
 				Cancel open campaign actions if the end date moves earlier
 			</label>
-			<button type="submit">Save campaign</button>
+			<button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save campaign'}</button>
 		</form>
 		<section class="card">
 			<h2>Add companies</h2>
-			<form
-				onsubmit={(event) => {
-					event.preventDefault();
-					void search();
-				}}
-			>
-				<input bind:value={q} placeholder="Name" />
-				<input bind:value={country} placeholder="Country" maxlength="2" />
-				<button type="submit">Search</button>
-			</form>
-			{#if matches.length}
-				<p>{matches.length} matching. Selected will be added; re-adding a removed company reactivates it.</p>
-				<button type="button" onclick={addSelected}>Add selected ({selected.length})</button>
+			{#if !catalog.length}
+				<p class="muted">No companies yet. Create a company first, then add it here.</p>
+			{:else if !available.length && !filter.trim()}
+				<p class="muted">Every company is already on this campaign.</p>
+			{:else}
+				<form onsubmit={addCompany}>
+					<label>Filter
+						<input bind:value={filter} placeholder="Type to narrow the list" />
+					</label>
+					<label>Company
+						<select bind:value={addCompanyId} required>
+							<option value="">Select…</option>
+							{#each available as row (row.id)}
+								<option value={row.id}>{row.company_name}</option>
+							{/each}
+						</select>
+					</label>
+					<button type="submit">Add to campaign</button>
+				</form>
 			{/if}
 		</section>
 		<section class="card">
@@ -294,16 +340,31 @@
 		cursor: pointer;
 		width: fit-content;
 	}
+	button:disabled {
+		opacity: 0.7;
+		cursor: wait;
+	}
 	.ghost {
 		background: white;
 		color: #20265e;
 		border: 1px solid #20265e;
 	}
+	.error,
+	.info {
+		padding: 0.65rem;
+		border-radius: 0.6rem;
+	}
 	.error {
 		background: #fde8e8;
 		color: #8a1f1f;
-		padding: 0.65rem;
-		border-radius: 0.6rem;
+	}
+	.info {
+		background: #eef7f1;
+		color: #1e5c3a;
+	}
+	.muted {
+		color: #5b607a;
+		margin: 0;
 	}
 	a {
 		color: #20265e;

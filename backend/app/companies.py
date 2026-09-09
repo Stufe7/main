@@ -45,6 +45,13 @@ class CompanyIn(BaseModel):
     record_state: str | None = None
 
 
+class CompanyCampaignOut(BaseModel):
+    id: str
+    name: str
+    status: str
+    membership_status: str
+
+
 def _row(row: tuple) -> CompanyOut:
     return CompanyOut(
         id=str(row[0]),
@@ -182,6 +189,48 @@ def get_company(
     if not row:
         raise HTTPException(status_code=404, detail="Company not found")
     return _row(row)
+
+
+@router.get("/companies/{company_id}/campaigns", response_model=list[CompanyCampaignOut])
+def list_company_campaigns(
+    company_id: str,
+    claims: Annotated[Claims, Depends(bearer_claims)],
+    user_id: Annotated[str, Depends(require_user_id)],
+    entity_id: Annotated[str, Depends(require_entity_id)],
+) -> list[CompanyCampaignOut]:
+    with runtime_connection() as connection, connection.cursor() as cur:
+        bind_request(cur, claims, entity_id)
+        cur.execute(
+            """
+            select 1 from public.company
+            where id = %s and entity_id = %s
+            """,
+            (company_id, entity_id),
+        )
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Company not found")
+        cur.execute(
+            """
+            select cam.id, cam.name, cam.status, cc.status
+            from public.campaign_company cc
+            join public.campaign cam
+              on cam.id = cc.campaign_id and cam.entity_id = cc.entity_id
+            where cc.entity_id = %s
+              and cc.company_id = %s
+              and cc.record_state = 'Active'
+            order by lower(cam.name)
+            """,
+            (entity_id, company_id),
+        )
+        return [
+            CompanyCampaignOut(
+                id=str(row[0]),
+                name=row[1],
+                status=row[2],
+                membership_status=row[3],
+            )
+            for row in cur.fetchall()
+        ]
 
 
 @router.patch("/companies/{company_id}", response_model=CompanyOut)

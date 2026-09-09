@@ -11,6 +11,8 @@
 	let endDate = $state('');
 	let status = $state('Planned');
 	let error = $state('');
+	let info = $state('');
+	let busy = $state(false);
 
 	onMount(async () => {
 		if (!(await requireSession())) {
@@ -23,7 +25,10 @@
 
 	async function submit(event: Event) {
 		event.preventDefault();
+		if (busy) return;
 		error = '';
+		info = '';
+		busy = true;
 		try {
 			const created = await api<{ id: string }>('/v1/campaigns', {
 				method: 'POST',
@@ -35,9 +40,11 @@
 					status
 				})
 			});
-			await goto(`/app/campaigns/${created.id}`);
+			info = 'Campaign saved.';
+			await goto(`/app/campaigns/${created.id}?saved=1`);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Save failed.';
+			busy = false;
 		}
 	}
 </script>
@@ -51,18 +58,21 @@
 	{#if error}
 		<p class="error">{error}</p>
 	{/if}
+	{#if info}
+		<p class="info">{info}</p>
+	{/if}
 	<form onsubmit={submit}>
-		<label>Name <input bind:value={name} required /></label>
-		<label>Description <textarea bind:value={description}></textarea></label>
-		<label>Start <input type="date" bind:value={startDate} required /></label>
-		<label>End <input type="date" bind:value={endDate} required /></label>
+		<label>Name <input bind:value={name} required disabled={busy} /></label>
+		<label>Description <textarea bind:value={description} disabled={busy}></textarea></label>
+		<label>Start <input type="date" bind:value={startDate} required disabled={busy} /></label>
+		<label>End <input type="date" bind:value={endDate} required disabled={busy} /></label>
 		<label>Status
-			<select bind:value={status}>
+			<select bind:value={status} disabled={busy}>
 				<option>Planned</option>
 				<option>Active</option>
 			</select>
 		</label>
-		<button type="submit">Create</button>
+		<button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save campaign'}</button>
 	</form>
 </section>
 
@@ -101,10 +111,21 @@
 		font-weight: 650;
 		padding: 0.7rem 1rem;
 	}
+	button:disabled {
+		opacity: 0.7;
+		cursor: wait;
+	}
+	.error,
+	.info {
+		padding: 0.65rem;
+		border-radius: 0.6rem;
+	}
 	.error {
 		background: #fde8e8;
 		color: #8a1f1f;
-		padding: 0.65rem;
-		border-radius: 0.6rem;
+	}
+	.info {
+		background: #eef7f1;
+		color: #1e5c3a;
 	}
 </style>
