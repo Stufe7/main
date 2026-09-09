@@ -147,6 +147,11 @@
 			error = verifyError.message;
 			return;
 		}
+		const { data: started } = await supabase.auth.getSession();
+		if (!started.session?.access_token) {
+			error = 'Could not start a session. Try the code again.';
+			return;
+		}
 		await continueAfterVerify();
 	}
 </script>
