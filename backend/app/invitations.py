@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -13,6 +14,16 @@ from app.spike1 import _assume_runtime
 from app.tenant import bind_request, raise_pg, require_entity_id
 
 router = APIRouter(prefix="/v1", tags=["invitations"])
+
+
+def _invite_mail(email: str, role: str, invite_id: str, *, required: bool = False) -> None:
+    accept_url = f"{settings.public_app_url.rstrip('/')}/invite/{invite_id}"
+    send_updates_mail(
+        email,
+        "You are invited to Stufe7",
+        f"You were invited to join a Stufe7 workspace as {role}.\n\n{accept_url}\n",
+        required=required,
+    )
 
 
 class InviteIn(BaseModel):
@@ -115,13 +126,8 @@ def create_invitation(
         )
         row = cur.fetchone()
         connection.commit()
-    accept_url = f"{settings.public_app_url.rstrip('/')}/invite/{invite_id}"
     try:
-        send_updates_mail(
-            str(body.email),
-            "You are invited to Stufe7",
-            f"You were invited to join a Stufe7 workspace as {body.role}.\n\n{accept_url}\n",
-        )
+        _invite_mail(row[1], row[2], invite_id)
     except Exception:
         pass
     return InviteOut(
@@ -131,6 +137,53 @@ def create_invitation(
         status=row[3],
         expires_at=row[4].isoformat(),
     )
+
+
+@router.post("/invitations/{invitation_id}/resend")
+def resend_invitation(
+    invitation_id: str,
+    claims: Annotated[Claims, Depends(bearer_claims)],
+    user_id: Annotated[str, Depends(require_user_id)],
+    entity_id: Annotated[str, Depends(require_entity_id)],
+) -> dict[str, str]:
+    with runtime_connection() as connection, connection.cursor() as cur:
+        bind_request(cur, claims, entity_id)
+        cur.execute(
+            """
+            select 1 from public.user_entity
+            where user_id = %s and entity_id = %s
+              and status = 'active' and role = 'Entity Admin'
+            """,
+            (user_id, entity_id),
+        )
+        if not cur.fetchone():
+            raise HTTPException(status_code=403, detail="Not an Entity Admin")
+        cur.execute(
+            """
+            select email, role, status, expires_at
+            from public.user_invitation
+            where id = %s and entity_id = %s
+            """,
+            (invitation_id, entity_id),
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        if row[2] != "Pending":
+            raise HTTPException(status_code=400, detail="Invitation is no longer pending")
+        if row[3] is not None and row[3] < datetime.now(tz=UTC):
+            raise HTTPException(status_code=400, detail="Invitation has expired")
+        try:
+            cur.execute("select public.app_ensure_auth_login(%s)", (row[0],))
+            connection.commit()
+        except Exception as exc:
+            connection.rollback()
+            raise_pg(exc)
+    try:
+        _invite_mail(row[0], row[1], invitation_id, required=True)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Could not send the invitation email") from exc
+    return {"status": "sent"}
 
 
 @router.post("/invitations/{invitation_id}/accept")

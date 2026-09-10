@@ -26,6 +26,7 @@
 		email: string;
 		role: string;
 		status: string;
+		inviteId?: string;
 	};
 
 	let invites = $state<Invite[]>([]);
@@ -34,6 +35,7 @@
 	let role = $state('User');
 	let error = $state('');
 	let info = $state('');
+	let sending = $state('');
 
 	const people = $derived.by(() => {
 		const taken = new Set(members.map((row) => row.email.toLowerCase()));
@@ -45,7 +47,8 @@
 				key: invite.id,
 				email: invite.email,
 				role: invite.role,
-				status: expired ? 'Expired' : 'Pending'
+				status: expired ? 'Expired' : 'Pending',
+				inviteId: expired ? undefined : invite.id
 			});
 		}
 		for (const member of members) {
@@ -97,6 +100,20 @@
 			error = err instanceof Error ? err.message : 'Invite failed.';
 		}
 	}
+
+	async function resend(inviteId: string, address: string) {
+		error = '';
+		info = '';
+		sending = inviteId;
+		try {
+			await api(`/v1/invitations/${inviteId}/resend`, { method: 'POST' });
+			info = `Invitation has been sent to ${address}.`;
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not resend invitation.';
+		} finally {
+			sending = '';
+		}
+	}
 </script>
 
 <svelte:head>
@@ -130,6 +147,12 @@
 	<section class="card">
 		<h2>People in this entity</h2>
 		<p class="muted">Pending invites and current members. Deactivate or remove someone in Settings → Users.</p>
+		{#if error}
+			<p class="error">{error}</p>
+		{/if}
+		{#if info}
+			<p class="info">{info}</p>
+		{/if}
 		{#if people.length}
 			<table>
 				<thead>
@@ -137,6 +160,7 @@
 						<th>Email</th>
 						<th>Role</th>
 						<th>Status</th>
+						<th></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -145,6 +169,16 @@
 							<td>{row.email}</td>
 							<td>{row.role}</td>
 							<td>{row.status}</td>
+							<td>
+								{#if row.inviteId}
+									<button
+										type="button"
+										class="ghost"
+										disabled={sending === row.inviteId}
+										onclick={() => resend(row.inviteId ?? '', row.email)}
+									>Resend</button>
+								{/if}
+							</td>
 						</tr>
 					{/each}
 				</tbody>
@@ -158,7 +192,7 @@
 
 <style>
 	.page {
-		width: min(36rem, calc(100% - 2rem));
+		width: min(40rem, calc(100% - 2rem));
 		margin: 1.5rem auto 3rem;
 		display: grid;
 		gap: 1rem;
@@ -202,6 +236,19 @@
 		font-weight: 650;
 		padding: 0.7rem 1rem;
 		margin-top: 0.35rem;
+		cursor: pointer;
+	}
+	button:disabled {
+		opacity: 0.6;
+		cursor: wait;
+	}
+	.ghost {
+		background: white;
+		color: #20265e;
+		border: 1px solid #20265e;
+		padding: 0.3rem 0.75rem;
+		margin: 0;
+		font-size: 0.85rem;
 	}
 	table {
 		width: 100%;

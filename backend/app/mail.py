@@ -9,9 +9,13 @@ from app.settings import settings
 log = logging.getLogger(__name__)
 
 
-def send_updates_mail(to_email: str, subject: str, text: str) -> None:
+def send_updates_mail(
+    to_email: str, subject: str, text: str, *, required: bool = False
+) -> None:
     if not settings.sendgrid_api_key:
         log.info("mail skipped (no SENDGRID_API_KEY): %s -> %s", subject, to_email)
+        if required:
+            raise RuntimeError("Email is not configured")
         return
     payload = {
         "personalizations": [{"to": [{"email": to_email}]}],
