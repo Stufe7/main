@@ -121,15 +121,15 @@
 </svelte:head>
 
 <div class="page">
+	{#if error}
+		<p class="error">{error}</p>
+	{/if}
+	{#if info}
+		<p class="info">{info}</p>
+	{/if}
 	<section class="card">
 		<h2>Invite a colleague</h2>
 		<p class="muted">Email domain must already be an Approved domain for this entity.</p>
-		{#if error}
-			<p class="error">{error}</p>
-		{/if}
-		{#if info}
-			<p class="info">{info}</p>
-		{/if}
 		<form onsubmit={submit}>
 			<label>Work email <input type="email" bind:value={email} required /></label>
 			<label
@@ -147,12 +147,6 @@
 	<section class="card">
 		<h2>People in this entity</h2>
 		<p class="muted">Pending invites and current members. Deactivate or remove someone in Settings → Users.</p>
-		{#if error}
-			<p class="error">{error}</p>
-		{/if}
-		{#if info}
-			<p class="info">{info}</p>
-		{/if}
 		{#if people.length}
 			<table>
 				<thead>
