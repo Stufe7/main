@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { api, withActiveEntity, type Company } from '$lib/api/client';
+	import { api, apiDownload, apiUpload, withActiveEntity, type Company } from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
 
 	let rows = $state<Company[]>([]);
 	let q = $state('');
 	let error = $state('');
+	let info = $state('');
 	let loading = $state(true);
+	let uploading = $state(false);
 
 	async function load() {
 		error = '';
@@ -19,6 +21,41 @@
 			error = err instanceof Error ? err.message : 'Could not load companies.';
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function downloadSheet() {
+		error = '';
+		info = '';
+		try {
+			await apiDownload('/v1/companies/export', 'companies.xlsx');
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not download Excel.';
+		}
+	}
+
+	async function uploadSheet(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		input.value = '';
+		if (!file) return;
+		error = '';
+		info = '';
+		uploading = true;
+		try {
+			const result = await apiUpload<{
+				added: number;
+				updated: number;
+				skipped: number;
+				errors: string[];
+			}>('/v1/companies/import', file);
+			const extra = result.errors.length ? ` ${result.errors.slice(0, 5).join(' ')}` : '';
+			info = `Added ${result.added}, updated ${result.updated}, skipped ${result.skipped}.${extra}`;
+			await load();
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not import Excel.';
+		} finally {
+			uploading = false;
 		}
 	}
 
@@ -52,9 +89,18 @@
 			<button type="submit">Search</button>
 		</form>
 		<a href="/app/companies/new">Add company</a>
+		<button type="button" class="ghost" onclick={downloadSheet}>Download Excel</button>
+		<label class="ghost file">
+			{uploading ? 'Uploading…' : 'Upload Excel'}
+			<input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onchange={uploadSheet} />
+		</label>
 	</div>
+	<p class="hint">Download the current list, edit in Excel, then upload to add new companies and update existing ones. Keep Company ID for updates; leave it blank for new rows. Empty cells do not clear existing values.</p>
 	{#if error}
 		<p class="error">{error}</p>
+	{/if}
+	{#if info}
+		<p class="info">{info}</p>
 	{/if}
 	{#if loading}
 		<p>Loading…</p>
@@ -87,7 +133,7 @@
 		align-items: center;
 		margin-bottom: 1rem;
 	}
-	.toolbar a {
+	.toolbar a:first-of-type {
 		margin-left: auto;
 	}
 	form {
@@ -105,7 +151,8 @@
 		padding: 0.5rem 0.7rem;
 	}
 	button,
-	.toolbar a {
+	.toolbar a,
+	.file {
 		border: 0;
 		border-radius: 999px;
 		background: #20265e;
@@ -113,6 +160,24 @@
 		font-weight: 650;
 		padding: 0.5rem 0.9rem;
 		text-decoration: none;
+		cursor: pointer;
+	}
+	.ghost,
+	.file {
+		background: white;
+		color: #20265e;
+		border: 1px solid #20265e;
+	}
+	.hint {
+		color: #5b607a;
+		font-size: 0.92rem;
+		margin: 0 0 1rem;
+	}
+	.info {
+		background: #eef7f1;
+		color: #1e5c3a;
+		padding: 0.65rem 0.75rem;
+		border-radius: 0.6rem;
 	}
 	.list {
 		list-style: none;

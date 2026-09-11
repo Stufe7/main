@@ -82,7 +82,7 @@
 </svelte:head>
 
 <section class="wrap">
-	<p>Use the template. Duplicates are never merged automatically.</p>
+	<p>Use the template. Duplicates are never merged automatically. To update existing companies, download Excel from Companies and upload it there.</p>
 	<p><a href={templateUrl}>Download template</a></p>
 	{#if error}
 		<p class="error">{error}</p>

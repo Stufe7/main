@@ -12,6 +12,7 @@ LIMITS: dict[tuple[str, str], tuple[int, int]] = {
     ("POST", "/v1/signup/complete"): (8, 3600),
     ("POST", "/v1/account/email-change/start"): (8, 3600),
     ("POST", "/v1/invitations"): (30, 3600),
+    ("POST", "/v1/companies/import"): (12, 3600),
 }
 
 _hits: dict[tuple[str, str, str], list[float]] = defaultdict(list)

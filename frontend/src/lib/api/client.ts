@@ -60,12 +60,12 @@ function isGetSession(path: string, init: RequestInit): boolean {
 	return (init.method || 'GET').toUpperCase() === 'GET';
 }
 
-async function apiRaw<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function authorizedFetch(path: string, init: RequestInit = {}, json = true): Promise<Response> {
 	const token = await accessToken();
 	const base = (env.PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
 	if (!base) throw new ApiError(503, 'API is not configured');
 	const headers = new Headers(init.headers);
-	headers.set('Content-Type', 'application/json');
+	if (json) headers.set('Content-Type', 'application/json');
 	if (token) headers.set('Authorization', `Bearer ${token}`);
 	const entity = activeEntityId();
 	if (entity) headers.set('X-Entity-Id', entity);
@@ -81,6 +81,29 @@ async function apiRaw<T>(path: string, init: RequestInit = {}): Promise<T> {
 		}
 		throw new ApiError(response.status, detail);
 	}
+	return response;
+}
+
+export async function apiDownload(path: string, filename: string): Promise<void> {
+	const response = await authorizedFetch(path, {}, false);
+	const blob = await response.blob();
+	const url = URL.createObjectURL(blob);
+	const link = document.createElement('a');
+	link.href = url;
+	link.download = filename;
+	link.click();
+	URL.revokeObjectURL(url);
+}
+
+export async function apiUpload<T>(path: string, file: File): Promise<T> {
+	const body = new FormData();
+	body.append('file', file);
+	const response = await authorizedFetch(path, { method: 'POST', body }, false);
+	return (await response.json()) as T;
+}
+
+async function apiRaw<T>(path: string, init: RequestInit = {}): Promise<T> {
+	const response = await authorizedFetch(path, init);
 	if (response.status === 204) return undefined as T;
 	return (await response.json()) as T;
 }

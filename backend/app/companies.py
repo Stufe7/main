@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+
+from app.company_sheet import _norm_name, classify_row, read_rows, workbook_bytes
 
 from app.authn import Claims, bearer_claims, require_user_id
 from app.db import runtime_connection
@@ -127,6 +130,188 @@ def list_companies(
             params,
         )
         return [_row(row) for row in cur.fetchall()]
+
+
+def _require_entity_admin(cur, user_id: str, entity_id: str) -> None:
+    cur.execute(
+        """
+        select role from public.user_entity
+        where user_id = %s and entity_id = %s and status = 'active'
+        """,
+        (user_id, entity_id),
+    )
+    role = cur.fetchone()
+    if not role or role[0] != "Entity Admin":
+        raise HTTPException(status_code=403, detail="not an Entity Admin")
+
+
+@router.get("/companies/export")
+def export_companies(
+    claims: Annotated[Claims, Depends(bearer_claims)],
+    user_id: Annotated[str, Depends(require_user_id)],
+    entity_id: Annotated[str, Depends(require_entity_id)],
+) -> StreamingResponse:
+    with runtime_connection() as connection, connection.cursor() as cur:
+        bind_request(cur, claims, entity_id)
+        cur.execute(
+            """
+            select c.id, c.company_name, c.legal_name, c.country, c.city, c.address,
+                   c.website, c.telephone, c.nature_of_business, c.status, c.notes,
+                   u.email
+            from public.company c
+            left join public.app_user u on u.id = c.owner_user_id
+            where c.entity_id = %s and c.record_state = 'Active'
+            order by lower(c.company_name)
+            """,
+            (entity_id,),
+        )
+        rows = [
+            {
+                "Company ID": str(row[0]),
+                "Company Name": row[1],
+                "Legal Name": row[2],
+                "Country": row[3],
+                "City": row[4],
+                "Address": row[5],
+                "Website": row[6],
+                "Telephone": row[7],
+                "Nature of Business": row[8],
+                "Company Status": row[9],
+                "Notes": row[10],
+                "Owner Email": row[11],
+            }
+            for row in cur.fetchall()
+        ]
+    payload = workbook_bytes(rows)
+    return StreamingResponse(
+        iter([payload]),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="companies.xlsx"'},
+    )
+
+
+@router.post("/companies/import")
+def import_companies(
+    claims: Annotated[Claims, Depends(bearer_claims)],
+    user_id: Annotated[str, Depends(require_user_id)],
+    entity_id: Annotated[str, Depends(require_entity_id)],
+    file: UploadFile = File(...),
+) -> dict[str, object]:
+    raw = file.file.read()
+    try:
+        parsed = read_rows(raw)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    added = 0
+    updated = 0
+    skipped = 0
+    errors: list[str] = []
+    with runtime_connection() as connection, connection.cursor() as cur:
+        bind_request(cur, claims, entity_id)
+        _require_entity_admin(cur, user_id, entity_id)
+        cur.execute(
+            """
+            select id, company_name, country, legal_name, city, address, website,
+                   telephone, nature_of_business, status, notes, owner_user_id
+            from public.company
+            where entity_id = %s and record_state = 'Active'
+            """,
+            (entity_id,),
+        )
+        existing = cur.fetchall()
+        by_id = {str(row[0]): {"id": row[0], "name": row[1], "country": row[2]} for row in existing}
+        by_name: dict[tuple[str, str], dict] = {}
+        for row in existing:
+            by_name[(_norm_name(row[1]), (row[2] or "").upper())] = {
+                "id": row[0],
+                "name": row[1],
+                "country": row[2],
+            }
+        cur.execute("select * from public.app_list_members(%s, %s)", (user_id, entity_id))
+        members = {str(row[1]).casefold(): str(row[0]) for row in cur.fetchall() if row[1]}
+        planned = [classify_row(item, by_id, by_name, members) for item in parsed]
+        try:
+            for index, row in enumerate(planned, start=2):
+                if row["action"] == "skip":
+                    skipped += 1
+                    if row["error"]:
+                        errors.append(f"Row {index}: {row['error']}")
+                    continue
+                if row["action"] == "create":
+                    cur.execute(
+                        """
+                        insert into public.company (
+                          entity_id, company_name, legal_name, country, city, address,
+                          website, telephone, nature_of_business, notes, status,
+                          record_state, owner_user_id, created_by_user_id, updated_by_user_id
+                        )
+                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s)
+                        """,
+                        (
+                            entity_id,
+                            row["company_name"],
+                            row["legal_name"],
+                            row["country"],
+                            row["city"],
+                            row["address"],
+                            row["website"],
+                            row["telephone"],
+                            row["nature_of_business"],
+                            row["notes"],
+                            row["status"] or "Prospect",
+                            row["owner_user_id"] or user_id,
+                            user_id,
+                            user_id,
+                        ),
+                    )
+                    added += 1
+                    continue
+                cur.execute(
+                    """
+                    update public.company
+                    set company_name = coalesce(%s, company_name),
+                        legal_name = coalesce(%s, legal_name),
+                        country = coalesce(%s, country),
+                        city = coalesce(%s, city),
+                        address = coalesce(%s, address),
+                        website = coalesce(%s, website),
+                        telephone = coalesce(%s, telephone),
+                        nature_of_business = coalesce(%s, nature_of_business),
+                        notes = coalesce(%s, notes),
+                        status = coalesce(%s, status),
+                        owner_user_id = coalesce(%s, owner_user_id),
+                        updated_by_user_id = %s,
+                        updated_at = now()
+                    where id = %s and entity_id = %s
+                    """,
+                    (
+                        row["company_name"],
+                        row["legal_name"],
+                        row["country"],
+                        row["city"],
+                        row["address"],
+                        row["website"],
+                        row["telephone"],
+                        row["nature_of_business"],
+                        row["notes"],
+                        row["status"],
+                        row["owner_user_id"],
+                        user_id,
+                        row["company_id"],
+                        entity_id,
+                    ),
+                )
+                updated += 1
+            connection.commit()
+        except Exception as exc:
+            connection.rollback()
+            raise_pg(exc)
+    return {
+        "added": added,
+        "updated": updated,
+        "skipped": skipped,
+        "errors": errors,
+    }
 
 
 @router.post("/companies", response_model=CompanyOut)
