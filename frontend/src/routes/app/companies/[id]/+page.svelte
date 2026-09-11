@@ -179,8 +179,8 @@
 	<title>{row?.company_name || 'Company'} — Stufe7</title>
 </svelte:head>
 
-<section class="card">
-	<p><a href="/app/companies">← Companies</a></p>
+<section class="wrap">
+	<p class="back"><a href="/app/companies">← Companies</a></p>
 	{#if loading}
 		<p>Loading…</p>
 	{/if}
@@ -191,7 +191,7 @@
 		<p class="info">{info}</p>
 	{/if}
 	{#if row}
-		<form onsubmit={save}>
+		<form class="card" onsubmit={save}>
 			<h1>
 				<input bind:value={row.company_name} required />
 			</h1>
@@ -221,82 +221,122 @@
 				</button>
 			</div>
 		</form>
-		<p><a href={`/app/contacts/new?company=${row.id}`}>Add contact</a></p>
-		<h2>Campaigns</h2>
-		{#if memberships.length}
-			<ul>
-				{#each memberships as item (item.id)}
-					<li>
-						<a href={`/app/campaigns/${item.id}`}>{item.name}</a>
-						· {item.status} · {item.membership_status}
-					</li>
-				{/each}
-			</ul>
-		{:else}
-			<p class="muted">Not on a campaign yet.</p>
-		{/if}
-		{#if addableCampaigns.length}
-			<form onsubmit={addToCampaign}>
-				<label>Add to campaign
-					<select bind:value={pickCampaign} required>
-						<option value="">Select…</option>
-						{#each addableCampaigns as item (item.id)}
-							<option value={item.id}>{item.name}</option>
-						{/each}
-					</select>
-				</label>
-				<button type="submit" disabled={busy}>Add to campaign</button>
+		<section class="card">
+			<h2>Campaigns</h2>
+			{#if memberships.length}
+				<ul>
+					{#each memberships as item (item.id)}
+						<li>
+							<a href={`/app/campaigns/${item.id}`}>{item.name}</a>
+							<span class="muted"> · {item.status} · {item.membership_status}</span>
+						</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="muted">Not on a campaign yet.</p>
+			{/if}
+			{#if addableCampaigns.length}
+				<form onsubmit={addToCampaign}>
+					<label>Add to campaign
+						<select bind:value={pickCampaign} required>
+							<option value="">Select…</option>
+							{#each addableCampaigns as item (item.id)}
+								<option value={item.id}>{item.name}</option>
+							{/each}
+						</select>
+					</label>
+					<button type="submit" disabled={busy}>Add to campaign</button>
+				</form>
+			{:else if campaigns.some((item) => item.status === 'Planned' || item.status === 'Active')}
+				<p class="muted">This company is already on every Planned or Active campaign.</p>
+			{:else}
+				<p class="muted">Create a Planned or Active campaign first, then add this company to it.</p>
+			{/if}
+		</section>
+		<section class="card">
+			<div class="head">
+				<h2>Contacts and activity</h2>
+				<a href={`/app/contacts/new?company=${row.id}`}>Add contact</a>
+			</div>
+			{#if contacts.length}
+				<ul>
+					{#each contacts as person (person.id)}
+						<li>
+							<a href={`/app/contacts/${person.id}`}>{person.first_name} {person.last_name}</a>
+						</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="muted">No contacts yet.</p>
+			{/if}
+			<h2>Quick activity</h2>
+			<form onsubmit={logActivity}>
+				<label>Subject <input bind:value={subject} required /></label>
+				<label>Next action <input bind:value={nextDesc} /></label>
+				<label>Due <input type="date" bind:value={nextDue} /></label>
+				<button type="submit" disabled={busy}>Log</button>
 			</form>
-		{:else if campaigns.some((item) => item.status === 'Planned' || item.status === 'Active')}
-			<p class="muted">This company is already on every Planned or Active campaign.</p>
-		{:else}
-			<p class="muted">Create a Planned or Active campaign first, then add this company to it.</p>
-		{/if}
-		<h2>Contacts</h2>
-		<ul>
-			{#each contacts as person (person.id)}
-				<li>
-					<a href={`/app/contacts/${person.id}`}>{person.first_name} {person.last_name}</a>
-				</li>
-			{/each}
-		</ul>
-		<h2>Quick activity</h2>
-		<form onsubmit={logActivity}>
-			<label>Subject <input bind:value={subject} required /></label>
-			<label>Next action <input bind:value={nextDesc} /></label>
-			<label>Due <input type="date" bind:value={nextDue} /></label>
-			<button type="submit" disabled={busy}>Log</button>
-		</form>
-		<h2>Open actions</h2>
-		<ul>
-			{#each actions as item (item.id)}
-				<li>{item.due_date} · {item.priority} · {item.description}</li>
-			{/each}
-		</ul>
-		<h2>History</h2>
-		<ul>
-			{#each activities as item (item.id)}
-				<li>
-					<a href={`/app/activities/${item.id}`}>{item.activity_date.slice(0, 10)} · {item.subject}</a>
-				</li>
-			{/each}
-		</ul>
+			<h2>Open actions</h2>
+			{#if actions.length}
+				<ul>
+					{#each actions as item (item.id)}
+						<li>{item.due_date} · {item.priority} · {item.description}</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="muted">No open actions.</p>
+			{/if}
+			<h2>History</h2>
+			{#if activities.length}
+				<ul>
+					{#each activities as item (item.id)}
+						<li>
+							<a href={`/app/activities/${item.id}`}>{item.activity_date.slice(0, 10)} · {item.subject}</a>
+						</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="muted">No activity yet.</p>
+			{/if}
+		</section>
 	{/if}
 </section>
 
 <style>
-	.card {
+	.wrap {
 		width: min(40rem, calc(100% - 2rem));
 		margin: 1.5rem auto 3rem;
+		display: grid;
+		gap: 1rem;
+	}
+	.card {
 		background: white;
 		border-radius: 1rem;
 		padding: 1.5rem;
 		box-shadow: 0 10px 30px rgb(32 38 94 / 0.06);
+		display: grid;
+		gap: 0.75rem;
 	}
 	form,
 	label {
 		display: grid;
 		gap: 0.45rem;
+	}
+	h1,
+	h2,
+	p,
+	ul {
+		margin: 0;
+	}
+	h2 {
+		font-size: 1.15rem;
+		color: #20265e;
+	}
+	.head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 1rem;
 	}
 	h1 input {
 		font: inherit;
@@ -328,6 +368,7 @@
 		font-weight: 650;
 		padding: 0.6rem 1rem;
 		cursor: pointer;
+		width: fit-content;
 	}
 	.ghost {
 		background: white;
@@ -350,7 +391,18 @@
 	.muted {
 		color: #5b607a;
 	}
+	.back {
+		margin: 0;
+	}
+	ul {
+		list-style: none;
+		padding: 0;
+	}
+	li {
+		padding: 0.35rem 0;
+	}
 	a {
 		color: #20265e;
+		font-weight: 650;
 	}
 </style>
