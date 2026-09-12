@@ -423,7 +423,12 @@
 			{#if addableCampaigns.length}
 				<form onsubmit={addToCampaign}>
 					<label>
-						<select bind:value={pickCampaign} required aria-label="Add to campaign">
+						<select
+							class:prompt={vacant(pickCampaign)}
+							bind:value={pickCampaign}
+							required
+							aria-label="Add to campaign"
+						>
 							<option value="">Add to campaign</option>
 							{#each addableCampaigns as item (item.id)}
 								<option value={item.id}>{item.name}</option>
@@ -476,6 +481,8 @@
 		top: 50%;
 		transform: translateY(-50%);
 		pointer-events: none;
+		font-weight: 400;
+		color: #8b90a5;
 	}
 	label:focus-within {
 		border-color: #20265e;
@@ -528,6 +535,10 @@
 		min-width: 0;
 		font-size: 1.05rem;
 		font-weight: 500;
+	}
+	label select.prompt {
+		font-weight: 400;
+		color: #8b90a5;
 	}
 	label :is(input, select, textarea):focus {
 		outline: none;
