@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from app.company_sheet import _norm_name, classify_row, read_rows, workbook_bytes
@@ -150,21 +150,26 @@ def export_companies(
     claims: Annotated[Claims, Depends(bearer_claims)],
     user_id: Annotated[str, Depends(require_user_id)],
     entity_id: Annotated[str, Depends(require_entity_id)],
-) -> StreamingResponse:
+) -> Response:
     with runtime_connection() as connection, connection.cursor() as cur:
         bind_request(cur, claims, entity_id)
-        cur.execute(
-            """
-            select c.id, c.company_name, c.legal_name, c.country, c.city, c.address,
-                   c.website, c.telephone, c.nature_of_business, c.status, c.notes,
-                   u.email
-            from public.company c
-            left join public.app_user u on u.id = c.owner_user_id
-            where c.entity_id = %s and c.record_state = 'Active'
-            order by lower(c.company_name)
-            """,
-            (entity_id,),
-        )
+        try:
+            cur.execute("select * from public.app_list_members(%s, %s)", (user_id, entity_id))
+            owners = {str(row[0]): row[1] for row in cur.fetchall() if row[0] and row[1]}
+            cur.execute(
+                """
+                select id, company_name, legal_name, country, city, address,
+                       website, telephone, nature_of_business, status, notes,
+                       owner_user_id
+                from public.company
+                where entity_id = %s and record_state = 'Active'
+                order by lower(company_name)
+                """,
+                (entity_id,),
+            )
+            company_rows = cur.fetchall()
+        except Exception as exc:
+            raise_pg(exc)
         rows = [
             {
                 "Company ID": str(row[0]),
@@ -178,13 +183,13 @@ def export_companies(
                 "Nature of Business": row[8],
                 "Company Status": row[9],
                 "Notes": row[10],
-                "Owner Email": row[11],
+                "Owner Email": owners.get(str(row[11])) if row[11] else None,
             }
-            for row in cur.fetchall()
+            for row in company_rows
         ]
     payload = workbook_bytes(rows)
-    return StreamingResponse(
-        iter([payload]),
+    return Response(
+        content=payload,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": 'attachment; filename="companies.xlsx"'},
     )
