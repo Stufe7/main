@@ -321,6 +321,55 @@
 			</form>
 		</section>
 		<section class="card">
+			<div class="head">
+				<h2>Contacts</h2>
+				<a href={`/app/contacts/new?company=${row.id}`}>Add contact</a>
+			</div>
+			{#if contacts.length}
+				<ul>
+					{#each contacts as person (person.id)}
+						<li>
+							<a href={`/app/contacts/${person.id}`}>{person.first_name} {person.last_name}</a>
+						</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="muted">No contacts yet.</p>
+			{/if}
+		</section>
+		<section class="card">
+			<h2>Activities</h2>
+			<h3>Quick activity</h3>
+			<form onsubmit={logActivity}>
+				<label>Subject <input bind:value={subject} required /></label>
+				<label>Next action <input bind:value={nextDesc} /></label>
+				<label>Due <input type="date" bind:value={nextDue} /></label>
+				<button type="submit" disabled={busy}>Log</button>
+			</form>
+			<h3>Open actions</h3>
+			{#if actions.length}
+				<ul>
+					{#each actions as item (item.id)}
+						<li>{item.due_date} · {item.priority} · {item.description}</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="muted">No open actions.</p>
+			{/if}
+			<h3>History</h3>
+			{#if activities.length}
+				<ul>
+					{#each activities as item (item.id)}
+						<li>
+							<a href={`/app/activities/${item.id}`}>{item.activity_date.slice(0, 10)} · {item.subject}</a>
+						</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="muted">No activity yet.</p>
+			{/if}
+		</section>
+		<section class="card">
 			<h2>Campaigns</h2>
 			{#if memberships.length}
 				<ul>
@@ -352,52 +401,6 @@
 				<p class="muted">Create a Planned or Active campaign first, then add this company to it.</p>
 			{/if}
 		</section>
-		<section class="card">
-			<div class="head">
-				<h2>Contacts and activity</h2>
-				<a href={`/app/contacts/new?company=${row.id}`}>Add contact</a>
-			</div>
-			{#if contacts.length}
-				<ul>
-					{#each contacts as person (person.id)}
-						<li>
-							<a href={`/app/contacts/${person.id}`}>{person.first_name} {person.last_name}</a>
-						</li>
-					{/each}
-				</ul>
-			{:else}
-				<p class="muted">No contacts yet.</p>
-			{/if}
-			<h2>Quick activity</h2>
-			<form onsubmit={logActivity}>
-				<label>Subject <input bind:value={subject} required /></label>
-				<label>Next action <input bind:value={nextDesc} /></label>
-				<label>Due <input type="date" bind:value={nextDue} /></label>
-				<button type="submit" disabled={busy}>Log</button>
-			</form>
-			<h2>Open actions</h2>
-			{#if actions.length}
-				<ul>
-					{#each actions as item (item.id)}
-						<li>{item.due_date} · {item.priority} · {item.description}</li>
-					{/each}
-				</ul>
-			{:else}
-				<p class="muted">No open actions.</p>
-			{/if}
-			<h2>History</h2>
-			{#if activities.length}
-				<ul>
-					{#each activities as item (item.id)}
-						<li>
-							<a href={`/app/activities/${item.id}`}>{item.activity_date.slice(0, 10)} · {item.subject}</a>
-						</li>
-					{/each}
-				</ul>
-			{:else}
-				<p class="muted">No activity yet.</p>
-			{/if}
-		</section>
 	{/if}
 </section>
 
@@ -423,12 +426,17 @@
 	}
 	h1,
 	h2,
+	h3,
 	p,
 	ul {
 		margin: 0;
 	}
 	h2 {
 		font-size: 1.15rem;
+		color: #20265e;
+	}
+	h3 {
+		font-size: 1rem;
 		color: #20265e;
 	}
 	.head {
