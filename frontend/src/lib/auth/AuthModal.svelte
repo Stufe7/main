@@ -105,8 +105,8 @@
 		lastOtpAt = Date.now();
 		otpEmail = trimmed;
 		otpCreateUser = createUser;
+		info = step === 'otp' ? 'Code resent.' : '';
 		step = 'otp';
-		info = `We emailed a sign-in code to ${otpEmail}.`;
 	}
 
 	async function continueAfterVerify() {
@@ -215,7 +215,7 @@
 
 			{#if step === 'form' && tab === 'login'}
 				<form onsubmit={submitLogin}>
-					<h2 id="auth-title">Log in</h2>
+					<h2 id="auth-title" class="sr-only">Log in</h2>
 					<label>
 						Work email
 						<input
@@ -278,15 +278,13 @@
 				<form onsubmit={verifyOtp}>
 					<h2 id="auth-title">Enter the code</h2>
 					<p class="hint">Sent to {otpEmail}</p>
-					<label>
-						Code
-						<input
-							inputmode="numeric"
-							autocomplete="one-time-code"
-							bind:value={otp}
-							required
-						/>
-					</label>
+					<input
+						inputmode="numeric"
+						autocomplete="one-time-code"
+						aria-label="Code"
+						bind:value={otp}
+						required
+					/>
 					<button class="primary" type="submit" disabled={busy}>Continue</button>
 					<button
 						class="link"
@@ -357,6 +355,17 @@
 		margin: 0;
 		color: #20265e;
 		font-size: 1.25rem;
+	}
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 	label {
 		display: grid;
