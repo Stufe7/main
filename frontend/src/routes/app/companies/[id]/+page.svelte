@@ -41,6 +41,10 @@
 		return text || null;
 	}
 
+	function vacant(value: string | null | undefined) {
+		return !(value ?? '').trim();
+	}
+
 	function hydrate(company: Company): Company {
 		return {
 			...company,
@@ -261,31 +265,50 @@
 			<h1>
 				<input bind:value={row.company_name} required />
 			</h1>
-			<label>Parent company
-				<input bind:value={row.parent_company} />
+			<label>
+				{#if vacant(row.parent_company)}<span>Parent company</span>{/if}
+				<input bind:value={row.parent_company} aria-label="Parent company" />
 			</label>
-			<label>Status
-				<select bind:value={row.status}>
+			<label>
+				<select bind:value={row.status} aria-label="Status">
 					<option>Prospect</option>
 					<option>Customer</option>
 					<option>Former Customer</option>
 					<option>Inactive</option>
 				</select>
 			</label>
-			<label>Owner
-				<select bind:value={row.owner_user_id}>
+			<label>
+				<select bind:value={row.owner_user_id} aria-label="Owner">
 					<option value="">Unassigned</option>
 					{#each members as member (member.user_id)}
 						<option value={member.user_id}>{member.email}</option>
 					{/each}
 				</select>
 			</label>
-			<label>Country <input bind:value={row.country} maxlength="2" /></label>
-			<label>City <input bind:value={row.city} /></label>
-			<label>Address <input bind:value={row.address} /></label>
-			<label>Website <input bind:value={row.website} /></label>
-			<label>Telephone <input bind:value={row.telephone} /></label>
-			<label>Nature of business <input bind:value={row.nature_of_business} /></label>
+			<label>
+				{#if vacant(row.country)}<span>Country</span>{/if}
+				<input bind:value={row.country} maxlength="2" aria-label="Country" />
+			</label>
+			<label>
+				{#if vacant(row.city)}<span>City</span>{/if}
+				<input bind:value={row.city} aria-label="City" />
+			</label>
+			<label>
+				{#if vacant(row.address)}<span>Address</span>{/if}
+				<input bind:value={row.address} aria-label="Address" />
+			</label>
+			<label>
+				{#if vacant(row.website)}<span>Website</span>{/if}
+				<input bind:value={row.website} aria-label="Website" />
+			</label>
+			<label>
+				{#if vacant(row.telephone)}<span>Telephone</span>{/if}
+				<input bind:value={row.telephone} aria-label="Telephone" />
+			</label>
+			<label>
+				{#if vacant(row.nature_of_business)}<span>Nature of business</span>{/if}
+				<input bind:value={row.nature_of_business} aria-label="Nature of business" />
+			</label>
 			<div class="actions">
 				<button type="submit" disabled={busy}>Save</button>
 				<button type="button" class="ghost" onclick={archive}>
@@ -315,8 +338,14 @@
 				<p class="muted">No notes yet.</p>
 			{/if}
 			<form onsubmit={addNote}>
-				<label>Note <input bind:value={noteText} required placeholder="ZGW operator" /></label>
-				<label>Note source <input bind:value={noteSource} placeholder="Website" /></label>
+				<label>
+					{#if vacant(noteText)}<span>Note</span>{/if}
+					<input bind:value={noteText} required aria-label="Note" />
+				</label>
+				<label>
+					{#if vacant(noteSource)}<span>Note source</span>{/if}
+					<input bind:value={noteSource} aria-label="Note source" />
+				</label>
 				<button type="submit" disabled={busy}>Add note</button>
 			</form>
 		</section>
@@ -341,9 +370,17 @@
 			<h2>Activities</h2>
 			<h3>Quick activity</h3>
 			<form onsubmit={logActivity}>
-				<label>Subject <input bind:value={subject} required /></label>
-				<label>Next action <input bind:value={nextDesc} /></label>
-				<label>Due <input type="date" bind:value={nextDue} /></label>
+				<label>
+					{#if vacant(subject)}<span>Subject</span>{/if}
+					<input bind:value={subject} required aria-label="Subject" />
+				</label>
+				<label>
+					{#if vacant(nextDesc)}<span>Next action</span>{/if}
+					<input bind:value={nextDesc} aria-label="Next action" />
+				</label>
+				<label>
+					<input type="date" bind:value={nextDue} aria-label="Due" />
+				</label>
 				<button type="submit" disabled={busy}>Log</button>
 			</form>
 			<h3>Open actions</h3>
@@ -385,9 +422,9 @@
 			{/if}
 			{#if addableCampaigns.length}
 				<form onsubmit={addToCampaign}>
-					<label>Add to campaign
-						<select bind:value={pickCampaign} required>
-							<option value="">Select…</option>
+					<label>
+						<select bind:value={pickCampaign} required aria-label="Add to campaign">
+							<option value="">Add to campaign</option>
 							{#each addableCampaigns as item (item.id)}
 								<option value={item.id}>{item.name}</option>
 							{/each}
@@ -424,14 +461,21 @@
 		gap: 0.5rem;
 	}
 	label {
-		display: grid;
-		gap: 0.1rem;
+		position: relative;
+		display: block;
 		border: 1px solid #d5d8e6;
 		border-radius: 0.5rem;
-		padding: 0.3rem 0.7rem 0.4rem;
-		font-size: 0.75rem;
+		padding: 0.55rem 0.75rem;
+		font-size: 1.05rem;
 		font-weight: 650;
 		color: #5b607a;
+	}
+	label span {
+		position: absolute;
+		left: 0.75rem;
+		top: 50%;
+		transform: translateY(-50%);
+		pointer-events: none;
 	}
 	label:focus-within {
 		border-color: #20265e;
@@ -444,11 +488,11 @@
 		margin: 0;
 	}
 	h2 {
-		font-size: 1.15rem;
+		font-size: 1.25rem;
 		color: #20265e;
 	}
 	h3 {
-		font-size: 1rem;
+		font-size: 1.05rem;
 		color: #20265e;
 	}
 	.head {
@@ -469,6 +513,7 @@
 	select,
 	textarea {
 		font: inherit;
+		font-size: 1.05rem;
 		color: #20265e;
 		border: 1px solid #d5d8e6;
 		border-radius: 0.5rem;
@@ -477,10 +522,12 @@
 	label :is(input, select, textarea) {
 		border: 0;
 		border-radius: 0;
-		padding: 0.05rem 0 0.1rem;
+		padding: 0;
 		background: transparent;
 		width: 100%;
 		min-width: 0;
+		font-size: 1.05rem;
+		font-weight: 500;
 	}
 	label :is(input, select, textarea):focus {
 		outline: none;
