@@ -17,7 +17,7 @@ router = APIRouter(prefix="/v1", tags=["imports"])
 
 HEADERS = [
     "Company Name",
-    "Legal Name",
+    "Parent Company",
     "Country",
     "City",
     "Address",
@@ -48,7 +48,7 @@ class PreviewIn(BaseModel):
 class PreviewRow(BaseModel):
     index: int
     company_name: str
-    legal_name: str | None = None
+    parent_company: str | None = None
     country: str | None = None
     city: str | None = None
     address: str | None = None
@@ -107,7 +107,9 @@ def _parse_rows(csv_text: str) -> list[dict[str, str]]:
     reader = csv.DictReader(io.StringIO(csv_text))
     if not reader.fieldnames:
         raise HTTPException(status_code=400, detail="CSV has no header row")
-    missing = [name for name in HEADERS if name not in reader.fieldnames]
+    fields = [("Parent Company" if name == "Legal Name" else name) for name in reader.fieldnames]
+    reader.fieldnames = fields
+    missing = [name for name in HEADERS if name not in fields]
     if missing:
         raise HTTPException(status_code=400, detail=f"CSV is missing columns: {', '.join(missing)}")
     return [{key: (row.get(key) or "") for key in HEADERS} for row in reader]
@@ -301,7 +303,7 @@ def _classify(
     return PreviewRow(
         index=index,
         company_name=name or "",
-        legal_name=_cell(raw, "Legal Name"),
+        parent_company=_cell(raw, "Parent Company"),
         country=country.upper() if country else None,
         city=_cell(raw, "City"),
         address=_cell(raw, "Address"),
@@ -346,7 +348,7 @@ def _import_batch(
                     cur.execute(
                         """
                         insert into public.company (
-                          entity_id, company_name, legal_name, country, city, address,
+                          entity_id, company_name, parent_company, country, city, address,
                           website, telephone, nature_of_business, status, record_state,
                           owner_user_id, created_by_user_id, updated_by_user_id
                         )
@@ -356,7 +358,7 @@ def _import_batch(
                         (
                             entity_id,
                             row.company_name.strip(),
-                            row.legal_name,
+                            row.parent_company,
                             row.country,
                             row.city,
                             row.address,

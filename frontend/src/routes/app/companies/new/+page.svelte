@@ -6,6 +6,7 @@
 	import { ensureActiveEntity } from '$lib/entity';
 
 	let company_name = $state('');
+	let parent_company = $state('');
 	let country = $state('SG');
 	let website = $state('');
 	let error = $state('');
@@ -24,6 +25,7 @@
 				method: 'POST',
 				body: JSON.stringify({
 					company_name,
+					parent_company: parent_company.trim() || null,
 					country,
 					website: website || null,
 					status: 'Prospect'
@@ -46,7 +48,8 @@
 		<p class="error">{error}</p>
 	{/if}
 	<form onsubmit={submit}>
-		<label>Name <input bind:value={company_name} required /></label>
+		<label>Company name <input bind:value={company_name} required /></label>
+		<label>Parent company <input bind:value={parent_company} /></label>
 		<label>Country <input bind:value={country} maxlength="2" required /></label>
 		<label>Website <input bind:value={website} placeholder="https://" /></label>
 		<button type="submit">Create</button>

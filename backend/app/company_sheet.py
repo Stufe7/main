@@ -10,7 +10,7 @@ from openpyxl import Workbook, load_workbook
 HEADERS = [
     "Company ID",
     "Company Name",
-    "Legal Name",
+    "Parent Company",
     "Country",
     "City",
     "Address",
@@ -67,6 +67,7 @@ def read_rows(payload: bytes) -> list[dict[str, str | None]]:
     if not header:
         raise ValueError("Excel file has no header row")
     names = [str(cell).strip() if cell is not None else "" for cell in header]
+    names = ["Parent Company" if name == "Legal Name" else name for name in names]
     missing = [name for name in HEADERS if name not in names]
     if missing:
         raise ValueError(f"Excel is missing columns: {', '.join(missing)}")
@@ -119,7 +120,7 @@ def classify_row(
         "error": error,
         "company_id": company_id,
         "company_name": name,
-        "legal_name": raw.get("Legal Name"),
+        "parent_company": raw.get("Parent Company"),
         "country": country,
         "city": raw.get("City"),
         "address": raw.get("Address"),

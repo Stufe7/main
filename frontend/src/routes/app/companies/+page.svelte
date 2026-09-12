@@ -112,7 +112,7 @@
 				<li>
 					<a href={`/app/companies/${row.id}`}>
 						<strong>{row.company_name}</strong>
-						<span>{row.status} · {row.country || '—'}</span>
+						<span>{row.status} · {row.country || '—'}{row.parent_company ? ` · ${row.parent_company}` : ''}</span>
 					</a>
 				</li>
 			{/each}

@@ -18,7 +18,7 @@ router = APIRouter(prefix="/v1", tags=["companies"])
 class CompanyOut(BaseModel):
     id: str
     company_name: str
-    legal_name: str | None
+    parent_company: str | None
     status: str
     record_state: str
     country: str | None
@@ -39,7 +39,7 @@ class MemberOut(BaseModel):
 
 class CompanyIn(BaseModel):
     company_name: str = Field(min_length=1)
-    legal_name: str | None = None
+    parent_company: str | None = None
     status: str = "Prospect"
     country: str | None = None
     website: str | None = None
@@ -59,7 +59,7 @@ def _row(row: tuple) -> CompanyOut:
     return CompanyOut(
         id=str(row[0]),
         company_name=row[1],
-        legal_name=row[2],
+        parent_company=row[2],
         status=row[3],
         record_state=row[4],
         country=row[5],
@@ -120,7 +120,7 @@ def list_companies(
             params.append(country.strip().upper())
         cur.execute(
             f"""
-            select id, company_name, legal_name, status, record_state, country,
+            select id, company_name, parent_company, status, record_state, country,
                    website, null, owner_user_id, next_action_due_date
             from public.company
             where {where}
@@ -158,7 +158,7 @@ def export_companies(
             owners = {str(row[0]): row[1] for row in cur.fetchall() if row[0] and row[1]}
             cur.execute(
                 """
-                select id, company_name, legal_name, country, city, address,
+                select id, company_name, parent_company, country, city, address,
                        website, telephone, nature_of_business, status, notes,
                        owner_user_id
                 from public.company
@@ -174,7 +174,7 @@ def export_companies(
             {
                 "Company ID": str(row[0]),
                 "Company Name": row[1],
-                "Legal Name": row[2],
+                "Parent Company": row[2],
                 "Country": row[3],
                 "City": row[4],
                 "Address": row[5],
@@ -216,7 +216,7 @@ def import_companies(
         _require_entity_admin(cur, user_id, entity_id)
         cur.execute(
             """
-            select id, company_name, country, legal_name, city, address, website,
+            select id, company_name, country, parent_company, city, address, website,
                    telephone, nature_of_business, status, notes, owner_user_id
             from public.company
             where entity_id = %s and record_state = 'Active'
@@ -246,7 +246,7 @@ def import_companies(
                     cur.execute(
                         """
                         insert into public.company (
-                          entity_id, company_name, legal_name, country, city, address,
+                          entity_id, company_name, parent_company, country, city, address,
                           website, telephone, nature_of_business, notes, status,
                           record_state, owner_user_id, created_by_user_id, updated_by_user_id
                         )
@@ -255,7 +255,7 @@ def import_companies(
                         (
                             entity_id,
                             row["company_name"],
-                            row["legal_name"],
+                            row["parent_company"],
                             row["country"],
                             row["city"],
                             row["address"],
@@ -275,7 +275,7 @@ def import_companies(
                     """
                     update public.company
                     set company_name = coalesce(%s, company_name),
-                        legal_name = coalesce(%s, legal_name),
+                        parent_company = coalesce(%s, parent_company),
                         country = coalesce(%s, country),
                         city = coalesce(%s, city),
                         address = coalesce(%s, address),
@@ -291,7 +291,7 @@ def import_companies(
                     """,
                     (
                         row["company_name"],
-                        row["legal_name"],
+                        row["parent_company"],
                         row["country"],
                         row["city"],
                         row["address"],
@@ -332,17 +332,17 @@ def create_company(
         cur.execute(
             """
             insert into public.company (
-              entity_id, company_name, legal_name, country, website, notes,
+              entity_id, company_name, parent_company, country, website, notes,
               status, record_state, owner_user_id, created_by_user_id, updated_by_user_id
             )
             values (%s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s)
-            returning id, company_name, legal_name, status, record_state, country,
+            returning id, company_name, parent_company, status, record_state, country,
                       website, notes, owner_user_id, next_action_due_date
             """,
             (
                 entity_id,
                 body.company_name.strip(),
-                body.legal_name,
+                body.parent_company,
                 body.country,
                 body.website,
                 body.notes,
@@ -368,7 +368,7 @@ def get_company(
         bind_request(cur, claims, entity_id)
         cur.execute(
             """
-            select id, company_name, legal_name, status, record_state, country,
+            select id, company_name, parent_company, status, record_state, country,
                    website, notes, owner_user_id, next_action_due_date
             from public.company
             where id = %s and entity_id = %s
@@ -450,7 +450,7 @@ def patch_company(
             """
             update public.company
             set company_name = %s,
-                legal_name = %s,
+                parent_company = %s,
                 country = %s,
                 website = %s,
                 notes = %s,
@@ -460,12 +460,12 @@ def patch_company(
                 updated_by_user_id = %s,
                 updated_at = now()
             where id = %s and entity_id = %s
-            returning id, company_name, legal_name, status, record_state, country,
+            returning id, company_name, parent_company, status, record_state, country,
                       website, notes, owner_user_id, next_action_due_date
             """,
             (
                 body.company_name.strip(),
-                body.legal_name,
+                body.parent_company,
                 body.country,
                 body.website,
                 body.notes,

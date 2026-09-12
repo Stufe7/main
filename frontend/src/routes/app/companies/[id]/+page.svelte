@@ -70,7 +70,7 @@
 					api<Campaign[]>('/v1/campaigns').catch(() => [] as Campaign[]),
 					api<Membership[]>(`/v1/companies/${id}/campaigns`).catch(() => [] as Membership[])
 				]);
-				row = company;
+				row = { ...company, parent_company: company.parent_company ?? '' };
 				members = memberRows;
 				contacts = contactRows;
 				activities = activityRows;
@@ -92,11 +92,11 @@
 		error = '';
 		info = '';
 		try {
-			row = await api<Company>(`/v1/companies/${companyId}`, {
+			const saved = await api<Company>(`/v1/companies/${companyId}`, {
 				method: 'PATCH',
 				body: JSON.stringify({
 					company_name: row.company_name,
-					legal_name: row.legal_name,
+					parent_company: row.parent_company.trim() || null,
 					status: row.status,
 					country: row.country,
 					website: row.website,
@@ -105,6 +105,7 @@
 					record_state: row.record_state
 				})
 			});
+			row = { ...saved, parent_company: saved.parent_company ?? '' };
 			info = 'Company saved.';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Save failed.';
@@ -192,9 +193,12 @@
 	{/if}
 	{#if row}
 		<form class="card" onsubmit={save}>
-			<h1>
+			<label class="title">Company name
 				<input bind:value={row.company_name} required />
-			</h1>
+			</label>
+			<label>Parent company
+				<input bind:value={row.parent_company} />
+			</label>
 			<label>Status
 				<select bind:value={row.status}>
 					<option>Prospect</option>
@@ -338,7 +342,7 @@
 		justify-content: space-between;
 		gap: 1rem;
 	}
-	h1 input {
+	.title input {
 		font: inherit;
 		font-size: 1.4rem;
 		font-weight: 700;

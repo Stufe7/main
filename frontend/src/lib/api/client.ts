@@ -182,7 +182,7 @@ export type SignupComplete = {
 export type Company = {
 	id: string;
 	company_name: string;
-	legal_name: string | null;
+	parent_company: string | null;
 	status: string;
 	record_state: string;
 	country: string | null;

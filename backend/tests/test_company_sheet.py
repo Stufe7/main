@@ -10,7 +10,7 @@ def test_roundtrip_and_upsert_actions() -> None:
             {
                 "Company ID": company_id,
                 "Company Name": "Acme Logistics",
-                "Legal Name": "Acme Pte Ltd",
+                "Parent Company": "Acme Group",
                 "Country": "SG",
                 "Company Status": "Customer",
                 "Owner Email": "marc@mmlogistix.com",
