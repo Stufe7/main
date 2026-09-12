@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { api, apiDownload, apiUpload, withActiveEntity, type Company } from '$lib/api/client';
+	import { api, apiDownload, apiUpload, withActiveEntity, type Company, type SessionInfo } from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
+	import { ensureActiveEntity } from '$lib/entity';
 
 	let rows = $state<Company[]>([]);
 	let q = $state('');
@@ -10,6 +11,7 @@
 	let info = $state('');
 	let loading = $state(true);
 	let uploading = $state(false);
+	let canUpload = $state(false);
 
 	async function load() {
 		error = '';
@@ -35,6 +37,7 @@
 	}
 
 	async function uploadSheet(event: Event) {
+		if (!canUpload) return;
 		const input = event.currentTarget as HTMLInputElement;
 		const file = input.files?.[0];
 		input.value = '';
@@ -65,7 +68,14 @@
 			return;
 		}
 		try {
-			await withActiveEntity(load);
+			await withActiveEntity(async () => {
+				const session = await api<SessionInfo>('/v1/session');
+				const role = session.memberships.find(
+					(row) => row.entity_id === ensureActiveEntity(session.memberships)
+				)?.role;
+				canUpload = role === 'Entity Admin';
+				await load();
+			});
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not load companies.';
 			loading = false;
@@ -90,12 +100,16 @@
 		</form>
 		<a href="/app/companies/new">Add company</a>
 		<button type="button" class="ghost" onclick={downloadSheet}>Download Excel</button>
-		<label class="ghost file">
-			{uploading ? 'Uploading…' : 'Upload Excel'}
-			<input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onchange={uploadSheet} />
-		</label>
+		{#if canUpload}
+			<label class="ghost file">
+				{uploading ? 'Uploading…' : 'Upload Excel'}
+				<input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onchange={uploadSheet} />
+			</label>
+		{/if}
 	</div>
-	<p class="hint">Download the current list, edit in Excel, then upload to add new companies and update existing ones. Keep Company ID for updates; leave it blank for new rows. Empty cells do not clear existing values.</p>
+	{#if canUpload}
+		<p class="hint">Download the current list, edit in Excel, then upload to add new companies and update existing ones. Keep Company ID for updates; leave it blank for new rows. Empty cells do not clear existing values.</p>
+	{/if}
 	{#if error}
 		<p class="error">{error}</p>
 	{/if}
