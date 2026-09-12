@@ -33,6 +33,25 @@
 	let nextDue = $state('');
 	let nextDesc = $state('');
 
+	function blank(value: string | null | undefined) {
+		const text = (value ?? '').trim();
+		return text || null;
+	}
+
+	function hydrate(company: Company): Company {
+		return {
+			...company,
+			parent_company: company.parent_company ?? '',
+			country: company.country ?? '',
+			city: company.city ?? '',
+			address: company.address ?? '',
+			website: company.website ?? '',
+			telephone: company.telephone ?? '',
+			nature_of_business: company.nature_of_business ?? '',
+			notes: company.notes ?? ''
+		};
+	}
+
 	const addableCampaigns = $derived(
 		campaigns.filter(
 			(item) =>
@@ -70,7 +89,7 @@
 					api<Campaign[]>('/v1/campaigns').catch(() => [] as Campaign[]),
 					api<Membership[]>(`/v1/companies/${id}/campaigns`).catch(() => [] as Membership[])
 				]);
-				row = { ...company, parent_company: company.parent_company ?? '' };
+				row = hydrate(company);
 				members = memberRows;
 				contacts = contactRows;
 				activities = activityRows;
@@ -96,16 +115,20 @@
 				method: 'PATCH',
 				body: JSON.stringify({
 					company_name: row.company_name,
-					parent_company: row.parent_company.trim() || null,
+					parent_company: blank(row.parent_company),
 					status: row.status,
-					country: row.country,
-					website: row.website,
-					notes: row.notes,
+					country: blank(row.country),
+					city: blank(row.city),
+					address: blank(row.address),
+					website: blank(row.website),
+					telephone: blank(row.telephone),
+					nature_of_business: blank(row.nature_of_business),
+					notes: blank(row.notes),
 					owner_user_id: row.owner_user_id,
 					record_state: row.record_state
 				})
 			});
-			row = { ...saved, parent_company: saved.parent_company ?? '' };
+			row = hydrate(saved);
 			info = 'Company saved.';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Save failed.';
@@ -193,9 +216,9 @@
 	{/if}
 	{#if row}
 		<form class="card" onsubmit={save}>
-			<label class="title">Company name
+			<h1>
 				<input bind:value={row.company_name} required />
-			</label>
+			</h1>
 			<label>Parent company
 				<input bind:value={row.parent_company} />
 			</label>
@@ -215,8 +238,12 @@
 					{/each}
 				</select>
 			</label>
-			<label>Country <input bind:value={row.country} /></label>
+			<label>Country <input bind:value={row.country} maxlength="2" /></label>
+			<label>City <input bind:value={row.city} /></label>
+			<label>Address <input bind:value={row.address} /></label>
 			<label>Website <input bind:value={row.website} /></label>
+			<label>Telephone <input bind:value={row.telephone} /></label>
+			<label>Nature of business <input bind:value={row.nature_of_business} /></label>
 			<label>Notes <textarea bind:value={row.notes} rows="4"></textarea></label>
 			<div class="actions">
 				<button type="submit" disabled={busy}>Save</button>
@@ -342,7 +369,7 @@
 		justify-content: space-between;
 		gap: 1rem;
 	}
-	.title input {
+	h1 input {
 		font: inherit;
 		font-size: 1.4rem;
 		font-weight: 700;

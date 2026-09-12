@@ -186,7 +186,11 @@ export type Company = {
 	status: string;
 	record_state: string;
 	country: string | null;
+	city: string | null;
+	address: string | null;
 	website: string | null;
+	telephone: string | null;
+	nature_of_business: string | null;
 	notes: string | null;
 	owner_user_id: string | null;
 	next_action_due_date: string | null;

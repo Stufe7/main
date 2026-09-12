@@ -22,7 +22,11 @@ class CompanyOut(BaseModel):
     status: str
     record_state: str
     country: str | None
+    city: str | None
+    address: str | None
     website: str | None
+    telephone: str | None
+    nature_of_business: str | None
     notes: str | None
     owner_user_id: str | None
     next_action_due_date: str | None
@@ -42,7 +46,11 @@ class CompanyIn(BaseModel):
     parent_company: str | None = None
     status: str = "Prospect"
     country: str | None = None
+    city: str | None = None
+    address: str | None = None
     website: str | None = None
+    telephone: str | None = None
+    nature_of_business: str | None = None
     notes: str | None = None
     owner_user_id: str | None = None
     record_state: str | None = None
@@ -63,10 +71,14 @@ def _row(row: tuple) -> CompanyOut:
         status=row[3],
         record_state=row[4],
         country=row[5],
-        website=row[6],
-        notes=row[7],
-        owner_user_id=str(row[8]) if row[8] else None,
-        next_action_due_date=row[9].isoformat() if row[9] else None,
+        city=row[6],
+        address=row[7],
+        website=row[8],
+        telephone=row[9],
+        nature_of_business=row[10],
+        notes=row[11],
+        owner_user_id=str(row[12]) if row[12] else None,
+        next_action_due_date=row[13].isoformat() if row[13] else None,
     )
 
 
@@ -121,7 +133,8 @@ def list_companies(
         cur.execute(
             f"""
             select id, company_name, parent_company, status, record_state, country,
-                   website, null, owner_user_id, next_action_due_date
+                   city, address, website, telephone, nature_of_business, notes,
+                   owner_user_id, next_action_due_date
             from public.company
             where {where}
             order by lower(company_name)
@@ -332,19 +345,25 @@ def create_company(
         cur.execute(
             """
             insert into public.company (
-              entity_id, company_name, parent_company, country, website, notes,
-              status, record_state, owner_user_id, created_by_user_id, updated_by_user_id
+              entity_id, company_name, parent_company, country, city, address,
+              website, telephone, nature_of_business, notes, status, record_state,
+              owner_user_id, created_by_user_id, updated_by_user_id
             )
-            values (%s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s)
+            values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s)
             returning id, company_name, parent_company, status, record_state, country,
-                      website, notes, owner_user_id, next_action_due_date
+                      city, address, website, telephone, nature_of_business, notes,
+                      owner_user_id, next_action_due_date
             """,
             (
                 entity_id,
                 body.company_name.strip(),
                 body.parent_company,
                 body.country,
+                body.city,
+                body.address,
                 body.website,
+                body.telephone,
+                body.nature_of_business,
                 body.notes,
                 body.status,
                 owner,
@@ -369,7 +388,8 @@ def get_company(
         cur.execute(
             """
             select id, company_name, parent_company, status, record_state, country,
-                   website, notes, owner_user_id, next_action_due_date
+                   city, address, website, telephone, nature_of_business, notes,
+                   owner_user_id, next_action_due_date
             from public.company
             where id = %s and entity_id = %s
             """,
@@ -452,7 +472,11 @@ def patch_company(
             set company_name = %s,
                 parent_company = %s,
                 country = %s,
+                city = %s,
+                address = %s,
                 website = %s,
+                telephone = %s,
+                nature_of_business = %s,
                 notes = %s,
                 status = %s,
                 record_state = %s,
@@ -461,13 +485,18 @@ def patch_company(
                 updated_at = now()
             where id = %s and entity_id = %s
             returning id, company_name, parent_company, status, record_state, country,
-                      website, notes, owner_user_id, next_action_due_date
+                      city, address, website, telephone, nature_of_business, notes,
+                      owner_user_id, next_action_due_date
             """,
             (
                 body.company_name.strip(),
                 body.parent_company,
                 body.country,
+                body.city,
+                body.address,
                 body.website,
+                body.telephone,
+                body.nature_of_business,
                 body.notes,
                 body.status,
                 record_state,
