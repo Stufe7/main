@@ -414,15 +414,27 @@
 	.card {
 		background: white;
 		border-radius: 1rem;
-		padding: 1.5rem;
+		padding: 1.25rem;
 		box-shadow: 0 10px 30px rgb(32 38 94 / 0.06);
 		display: grid;
-		gap: 0.75rem;
+		gap: 0.6rem;
 	}
-	form,
+	form {
+		display: grid;
+		gap: 0.5rem;
+	}
 	label {
 		display: grid;
-		gap: 0.45rem;
+		gap: 0.1rem;
+		border: 1px solid #d5d8e6;
+		border-radius: 0.5rem;
+		padding: 0.3rem 0.7rem 0.4rem;
+		font-size: 0.75rem;
+		font-weight: 650;
+		color: #5b607a;
+	}
+	label:focus-within {
+		border-color: #20265e;
 	}
 	h1,
 	h2,
@@ -457,9 +469,21 @@
 	select,
 	textarea {
 		font: inherit;
+		color: #20265e;
 		border: 1px solid #d5d8e6;
 		border-radius: 0.5rem;
 		padding: 0.55rem 0.7rem;
+	}
+	label :is(input, select, textarea) {
+		border: 0;
+		border-radius: 0;
+		padding: 0.05rem 0 0.1rem;
+		background: transparent;
+		width: 100%;
+		min-width: 0;
+	}
+	label :is(input, select, textarea):focus {
+		outline: none;
 	}
 	.actions {
 		display: flex;
