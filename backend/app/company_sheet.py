@@ -18,7 +18,8 @@ HEADERS = [
     "Telephone",
     "Nature of Business",
     "Company Status",
-    "Notes",
+    "Note",
+    "Note Source",
     "Owner Email",
 ]
 
@@ -67,16 +68,24 @@ def read_rows(payload: bytes) -> list[dict[str, str | None]]:
     if not header:
         raise ValueError("Excel file has no header row")
     names = [str(cell).strip() if cell is not None else "" for cell in header]
-    names = ["Parent Company" if name == "Legal Name" else name for name in names]
-    missing = [name for name in HEADERS if name not in names]
+    names = [
+        {"Legal Name": "Parent Company", "Notes": "Note"}.get(name, name) for name in names
+    ]
+    required = [name for name in HEADERS if name not in ("Note", "Note Source")]
+    missing = [name for name in required if name not in names]
     if missing:
         raise ValueError(f"Excel is missing columns: {', '.join(missing)}")
-    index = {name: names.index(name) for name in HEADERS}
+    index = {name: names.index(name) for name in HEADERS if name in names}
     parsed: list[dict[str, str | None]] = []
     for raw in rows:
         if raw is None or all(cell is None or str(cell).strip() == "" for cell in raw):
             continue
-        parsed.append({key: _cell(raw[index[key]] if index[key] < len(raw) else None) for key in HEADERS})
+        parsed.append(
+            {
+                key: _cell(raw[index[key]] if key in index and index[key] < len(raw) else None)
+                for key in HEADERS
+            }
+        )
     return parsed
 
 
@@ -128,6 +137,7 @@ def classify_row(
         "telephone": raw.get("Telephone"),
         "nature_of_business": raw.get("Nature of Business"),
         "status": status if status in STATUSES else None,
-        "notes": raw.get("Notes"),
+        "note": raw.get("Note"),
+        "note_source": raw.get("Note Source"),
         "owner_user_id": owner_id,
     }

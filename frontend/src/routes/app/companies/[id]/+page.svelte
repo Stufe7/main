@@ -8,6 +8,7 @@
 		type ActionItem,
 		type Activity,
 		type Company,
+		type CompanyNote,
 		type Contact,
 		type Member
 	} from '$lib/api/client';
@@ -32,6 +33,8 @@
 	let subject = $state('');
 	let nextDue = $state('');
 	let nextDesc = $state('');
+	let noteText = $state('');
+	let noteSource = $state('');
 
 	function blank(value: string | null | undefined) {
 		const text = (value ?? '').trim();
@@ -48,7 +51,7 @@
 			website: company.website ?? '',
 			telephone: company.telephone ?? '',
 			nature_of_business: company.nature_of_business ?? '',
-			notes: company.notes ?? ''
+			notes: company.notes ?? []
 		};
 	}
 
@@ -123,7 +126,6 @@
 					website: blank(row.website),
 					telephone: blank(row.telephone),
 					nature_of_business: blank(row.nature_of_business),
-					notes: blank(row.notes),
 					owner_user_id: row.owner_user_id,
 					record_state: row.record_state
 				})
@@ -174,6 +176,46 @@
 		if (!row) return;
 		row.record_state = row.record_state === 'Archived' ? 'Active' : 'Archived';
 		await save(new Event('submit'));
+	}
+
+	async function addNote(event: Event) {
+		event.preventDefault();
+		if (!row || !noteText.trim()) return;
+		busy = true;
+		error = '';
+		info = '';
+		try {
+			const created = await api<CompanyNote>(`/v1/companies/${companyId}/notes`, {
+				method: 'POST',
+				body: JSON.stringify({
+					note: noteText.trim(),
+					source: noteSource.trim() || null
+				})
+			});
+			row = { ...row, notes: [...row.notes, created] };
+			noteText = '';
+			noteSource = '';
+			info = 'Note added.';
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not add note.';
+		} finally {
+			busy = false;
+		}
+	}
+
+	async function removeNote(noteId: string) {
+		if (!row) return;
+		busy = true;
+		error = '';
+		info = '';
+		try {
+			await api(`/v1/companies/${companyId}/notes/${noteId}`, { method: 'DELETE' });
+			row = { ...row, notes: row.notes.filter((item) => item.id !== noteId) };
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not remove note.';
+		} finally {
+			busy = false;
+		}
 	}
 
 	async function addToCampaign(event: Event) {
@@ -244,7 +286,6 @@
 			<label>Website <input bind:value={row.website} /></label>
 			<label>Telephone <input bind:value={row.telephone} /></label>
 			<label>Nature of business <input bind:value={row.nature_of_business} /></label>
-			<label>Notes <textarea bind:value={row.notes} rows="4"></textarea></label>
 			<div class="actions">
 				<button type="submit" disabled={busy}>Save</button>
 				<button type="button" class="ghost" onclick={archive}>
@@ -252,6 +293,33 @@
 				</button>
 			</div>
 		</form>
+		<section class="card">
+			<h2>Notes</h2>
+			{#if row.notes.length}
+				<ul>
+					{#each row.notes as item (item.id)}
+						<li>
+							<span>
+								{item.note}
+								{#if item.source}
+									<span class="muted"> · {item.source}</span>
+								{/if}
+							</span>
+							<button type="button" class="ghost small" disabled={busy} onclick={() => removeNote(item.id)}>
+								Remove
+							</button>
+						</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="muted">No notes yet.</p>
+			{/if}
+			<form onsubmit={addNote}>
+				<label>Note <input bind:value={noteText} required placeholder="ZGW operator" /></label>
+				<label>Note source <input bind:value={noteSource} placeholder="Website" /></label>
+				<button type="submit" disabled={busy}>Add note</button>
+			</form>
+		</section>
 		<section class="card">
 			<h2>Campaigns</h2>
 			{#if memberships.length}
@@ -405,6 +473,16 @@
 		background: white;
 		color: #20265e;
 		border: 1px solid #20265e;
+	}
+	.small {
+		padding: 0.25rem 0.7rem;
+		font-size: 0.85rem;
+	}
+	.card li {
+		display: flex;
+		justify-content: space-between;
+		gap: 0.75rem;
+		align-items: baseline;
 	}
 	.error,
 	.info {

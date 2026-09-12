@@ -179,6 +179,12 @@ export type SignupComplete = {
 	summary?: string | null;
 };
 
+export type CompanyNote = {
+	id: string;
+	note: string;
+	source: string | null;
+};
+
 export type Company = {
 	id: string;
 	company_name: string;
@@ -191,7 +197,7 @@ export type Company = {
 	website: string | null;
 	telephone: string | null;
 	nature_of_business: string | null;
-	notes: string | null;
+	notes: CompanyNote[];
 	owner_user_id: string | null;
 	next_action_due_date: string | null;
 };

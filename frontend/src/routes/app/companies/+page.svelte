@@ -111,7 +111,16 @@
 			{#each rows as row (row.id)}
 				<li>
 					<a href={`/app/companies/${row.id}`}>
-						<strong>{row.company_name}</strong>
+						<div>
+							<strong>{row.company_name}</strong>
+							{#if row.notes?.length}
+								<p class="notes">
+									{row.notes
+										.map((item) => (item.source ? `${item.note} (${item.source})` : item.note))
+										.join(' · ')}
+								</p>
+							{/if}
+						</div>
 						<span>{row.status} · {row.country || '—'}{row.parent_company ? ` · ${row.parent_company}` : ''}</span>
 					</a>
 				</li>
@@ -197,6 +206,11 @@
 		text-decoration: none;
 	}
 	li span {
+		color: #5b607a;
+		font-size: 0.9rem;
+	}
+	.notes {
+		margin: 0.25rem 0 0;
 		color: #5b607a;
 		font-size: 0.9rem;
 	}
