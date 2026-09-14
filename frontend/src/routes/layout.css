@@ -17,10 +17,15 @@ body {
 
 @media print {
 	@page {
-		margin: 14mm;
+		margin: 10mm;
 	}
 	html {
 		background: white;
+		font-size: 11pt;
+	}
+	body {
+		font-size: 11pt;
+		line-height: 1.25;
 	}
 	header,
 	.no-print {

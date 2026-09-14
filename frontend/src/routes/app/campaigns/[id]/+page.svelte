@@ -406,13 +406,31 @@
 		.wrap {
 			width: 100%;
 			margin: 0;
+			gap: 0.35rem;
+			font-size: 11pt;
+			line-height: 1.25;
+		}
+		.wrap :is(h2, p, li, a, label, input, select, textarea, span, button) {
+			font-size: 11pt;
+			line-height: 1.25;
 		}
 		.card,
+		form,
+		label {
+			gap: 0.2rem;
+		}
+		.card {
+			padding: 0.35rem 0.45rem;
+			box-shadow: none;
+			border: 1px solid #d5d8e6;
+		}
 		.list {
 			box-shadow: none;
 			border: 1px solid #d5d8e6;
 		}
 		li {
+			padding: 0.12rem 0.4rem;
+			gap: 0.35rem;
 			break-inside: avoid;
 		}
 		input,
@@ -421,6 +439,7 @@
 			border-color: transparent;
 			appearance: none;
 			background: transparent;
+			padding: 0.1rem 0;
 		}
 		.error,
 		.info {
