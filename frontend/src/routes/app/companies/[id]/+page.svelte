@@ -45,6 +45,19 @@
 		return !(value ?? '').trim();
 	}
 
+	function websiteHref(value: string | null | undefined) {
+		const text = (value ?? '').trim();
+		if (!text) return '';
+		const withProtocol = /^[a-z][a-z0-9+.-]*:/i.test(text) ? text : `https://${text}`;
+		try {
+			const url = new URL(withProtocol);
+			if (url.protocol !== 'http:' && url.protocol !== 'https:') return '';
+			return url.href;
+		} catch {
+			return '';
+		}
+	}
+
 	function hydrate(company: Company): Company {
 		return {
 			...company,
@@ -66,6 +79,7 @@
 				!memberships.some((row) => row.id === item.id)
 		)
 	);
+	const siteHref = $derived(websiteHref(row?.website));
 
 	onMount(async () => {
 		if (!(await requireSession())) {
@@ -306,10 +320,15 @@
 				{#if vacant(row.address)}<span>Address</span>{/if}
 				<input bind:value={row.address} aria-label="Address" />
 			</label>
-			<label>
-				{#if vacant(row.website)}<span>Website</span>{/if}
-				<input bind:value={row.website} aria-label="Website" />
-			</label>
+			<div class="website">
+				<label>
+					{#if vacant(row.website)}<span>Website</span>{/if}
+					<input bind:value={row.website} aria-label="Website" />
+				</label>
+				{#if siteHref}
+					<a class="open no-print" href={siteHref} target="_blank" rel="noopener noreferrer">Open</a>
+				{/if}
+			</div>
 			<label>
 				{#if vacant(row.telephone)}<span>Telephone</span>{/if}
 				<input bind:value={row.telephone} aria-label="Telephone" />
@@ -551,6 +570,29 @@
 		font-size: 1.05rem;
 		font-weight: 500;
 	}
+	.website {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		border: 1px solid #d5d8e6;
+		border-radius: 0.5rem;
+		padding-right: 0.55rem;
+	}
+	.website:focus-within {
+		border-color: #20265e;
+	}
+	.website label {
+		flex: 1;
+		min-width: 0;
+		border: 0;
+	}
+	.open {
+		flex-shrink: 0;
+		font-size: 0.9rem;
+		font-weight: 650;
+		text-decoration: none;
+		white-space: nowrap;
+	}
 	label select.prompt {
 		font-weight: 400;
 		color: #8b90a5;
@@ -631,7 +673,8 @@
 		li {
 			break-inside: avoid;
 		}
-		label:has(span) {
+		label:has(span),
+		.website:has(span) {
 			display: none;
 		}
 		input,
