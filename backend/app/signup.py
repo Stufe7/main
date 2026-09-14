@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field, HttpUrl
 
 from app.authn import Claims, bearer_claims, require_user_id
@@ -152,6 +152,7 @@ def signup_complete(
 def session(
     claims: Annotated[Claims, Depends(bearer_claims)],
     user_id: Annotated[str, Depends(require_user_id)],
+    x_entity_id: Annotated[str | None, Header()] = None,
 ) -> SessionOut:
     from app.account import sync_confirmed_email_on
 
@@ -201,6 +202,11 @@ def session(
         cur.execute("select email from public.app_user where id = %s", (user_id,))
         stored = cur.fetchone()
         stored_email = stored[0] if stored else None
+        if x_entity_id:
+            cur.execute("select public.app_has_active_membership(%s, %s)", (user_id, x_entity_id))
+            allowed = cur.fetchone()
+            if allowed and allowed[0]:
+                cur.execute("select public.app_touch_last_access(%s, %s)", (user_id, x_entity_id))
     return SessionOut(
         user_id=user_id,
         email=stored_email or claims.get("email"),

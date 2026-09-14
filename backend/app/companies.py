@@ -200,6 +200,7 @@ def list_companies(
     q: str = "",
     record_state: str = Query(default="Active"),
     country: str = "",
+    include_notes: bool = False,
 ) -> list[CompanyOut]:
     with runtime_connection() as connection, connection.cursor() as cur:
         bind_request(cur, claims, entity_id)
@@ -238,7 +239,10 @@ def list_companies(
             """,
             params,
         )
-        return _attach_notes(cur, entity_id, [_row(row) for row in cur.fetchall()])
+        items = [_row(row) for row in cur.fetchall()]
+        if include_notes:
+            return _attach_notes(cur, entity_id, items)
+        return items
 
 
 def _require_entity_admin(cur, user_id: str, entity_id: str) -> None:

@@ -17,8 +17,9 @@
 		error = '';
 		loading = true;
 		try {
-			const query = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : '';
-			rows = await api<Company[]>(`/v1/companies${query}`);
+			const params = new URLSearchParams({ include_notes: 'true' });
+			if (q.trim()) params.set('q', q.trim());
+			rows = await api<Company[]>(`/v1/companies?${params}`);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not load companies.';
 		} finally {
