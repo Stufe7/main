@@ -386,7 +386,12 @@
 				<ul>
 					{#each contacts as person (person.id)}
 						<li>
-							<a href={`/app/contacts/${person.id}`}>{person.first_name} {person.last_name}</a>
+							<span>
+								<a href={`/app/contacts/${person.id}`}>{person.first_name} {person.last_name}</a>
+								{#if person.job_title}
+									<span class="muted"> · {person.job_title}</span>
+								{/if}
+							</span>
 						</li>
 					{/each}
 				</ul>
