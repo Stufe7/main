@@ -96,7 +96,7 @@
 				void load();
 			}}
 		>
-			<input bind:value={q} placeholder="Search name or notes" />
+			<input bind:value={q} placeholder="Search name, nature of business, or notes" />
 			<button type="submit">Search</button>
 		</form>
 		<a href="/app/companies/new">Add company</a>
@@ -128,6 +128,9 @@
 					<a href={`/app/companies/${row.id}`}>
 						<div>
 							<strong>{row.company_name}</strong>
+							{#if row.nature_of_business}
+								<p class="notes">{row.nature_of_business}</p>
+							{/if}
 							{#if row.notes?.length}
 								<p class="notes">
 									{row.notes

@@ -214,6 +214,7 @@ def list_companies(
             where += """
               and (
                 company_name ilike %s
+                or coalesce(nature_of_business, '') ilike %s
                 or exists (
                   select 1 from public.company_note n
                   where n.entity_id = company.entity_id
@@ -223,7 +224,7 @@ def list_companies(
                 )
               )
             """
-            params.extend([pattern, pattern, pattern])
+            params.extend([pattern, pattern, pattern, pattern])
         if country.strip():
             where += " and country = %s"
             params.append(country.strip().upper())
