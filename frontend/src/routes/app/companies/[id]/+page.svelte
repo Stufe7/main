@@ -222,6 +222,10 @@
 		}
 	}
 
+	function downloadPdf() {
+		window.print();
+	}
+
 	async function addToCampaign(event: Event) {
 		event.preventDefault();
 		if (!pickCampaign || !companyId) return;
@@ -250,9 +254,14 @@
 </svelte:head>
 
 <section class="wrap">
-	<p class="back"><a href="/app/companies">← Companies</a></p>
+	<div class="toolbar no-print">
+		<p class="back"><a href="/app/companies">← Companies</a></p>
+		{#if row}
+			<button type="button" class="ghost" onclick={downloadPdf}>Download PDF</button>
+		{/if}
+	</div>
 	{#if loading}
-		<p>Loading…</p>
+		<p class="no-print">Loading…</p>
 	{/if}
 	{#if error}
 		<p class="error">{error}</p>
@@ -309,7 +318,7 @@
 				{#if vacant(row.nature_of_business)}<span>Nature of business</span>{/if}
 				<input bind:value={row.nature_of_business} aria-label="Nature of business" />
 			</label>
-			<div class="actions">
+			<div class="actions no-print">
 				<button type="submit" disabled={busy}>Save</button>
 				<button type="button" class="ghost" onclick={archive}>
 					{row.record_state === 'Archived' ? 'Reactivate' : 'Archive'}
@@ -328,7 +337,7 @@
 									<span class="muted"> · {item.source}</span>
 								{/if}
 							</span>
-							<button type="button" class="ghost small" disabled={busy} onclick={() => removeNote(item.id)}>
+							<button type="button" class="ghost small no-print" disabled={busy} onclick={() => removeNote(item.id)}>
 								Remove
 							</button>
 						</li>
@@ -337,7 +346,7 @@
 			{:else}
 				<p class="muted">No notes yet.</p>
 			{/if}
-			<form onsubmit={addNote}>
+			<form class="no-print" onsubmit={addNote}>
 				<label>
 					{#if vacant(noteText)}<span>Note</span>{/if}
 					<input bind:value={noteText} required aria-label="Note" />
@@ -352,7 +361,7 @@
 		<section class="card">
 			<div class="head">
 				<h2>Contacts</h2>
-				<a href={`/app/contacts/new?company=${row.id}`}>Add contact</a>
+				<a class="no-print" href={`/app/contacts/new?company=${row.id}`}>Add contact</a>
 			</div>
 			{#if contacts.length}
 				<ul>
@@ -368,8 +377,8 @@
 		</section>
 		<section class="card">
 			<h2>Activities</h2>
-			<h3>Quick activity</h3>
-			<form onsubmit={logActivity}>
+			<h3 class="no-print">Quick activity</h3>
+			<form class="no-print" onsubmit={logActivity}>
 				<label>
 					{#if vacant(subject)}<span>Subject</span>{/if}
 					<input bind:value={subject} required aria-label="Subject" />
@@ -421,7 +430,7 @@
 				<p class="muted">Not on a campaign yet.</p>
 			{/if}
 			{#if addableCampaigns.length}
-				<form onsubmit={addToCampaign}>
+				<form class="no-print" onsubmit={addToCampaign}>
 					<label>
 						<select
 							class:prompt={vacant(pickCampaign)}
@@ -438,9 +447,9 @@
 					<button type="submit" disabled={busy}>Add to campaign</button>
 				</form>
 			{:else if campaigns.some((item) => item.status === 'Planned' || item.status === 'Active')}
-				<p class="muted">This company is already on every Planned or Active campaign.</p>
+				<p class="muted no-print">This company is already on every Planned or Active campaign.</p>
 			{:else}
-				<p class="muted">Create a Planned or Active campaign first, then add this company to it.</p>
+				<p class="muted no-print">Create a Planned or Active campaign first, then add this company to it.</p>
 			{/if}
 		</section>
 	{/if}
@@ -451,6 +460,12 @@
 		width: min(40rem, calc(100% - 2rem));
 		margin: 1.5rem auto 3rem;
 		display: grid;
+		gap: 1rem;
+	}
+	.toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
 		gap: 1rem;
 	}
 	.card {
@@ -603,5 +618,32 @@
 	a {
 		color: #20265e;
 		font-weight: 650;
+	}
+	@media print {
+		.wrap {
+			width: 100%;
+			margin: 0;
+		}
+		.card {
+			box-shadow: none;
+			border: 1px solid #d5d8e6;
+		}
+		li {
+			break-inside: avoid;
+		}
+		label:has(span) {
+			display: none;
+		}
+		input,
+		select,
+		textarea {
+			border-color: transparent;
+			appearance: none;
+			background: transparent;
+		}
+		.error,
+		.info {
+			display: none;
+		}
 	}
 </style>

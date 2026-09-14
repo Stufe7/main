@@ -89,6 +89,10 @@
 		}
 	});
 
+	function downloadPdf() {
+		window.print();
+	}
+
 	async function save(event: Event) {
 		event.preventDefault();
 		if (!campaign || busy) return;
@@ -197,6 +201,12 @@
 </svelte:head>
 
 <section class="wrap">
+	{#if campaign}
+		<div class="toolbar no-print">
+			<p class="back"><a href="/app/campaigns">← Campaigns</a></p>
+			<button type="button" class="ghost" onclick={downloadPdf}>Download PDF</button>
+		</div>
+	{/if}
 	{#if error}
 		<p class="error">{error}</p>
 	{/if}
@@ -217,13 +227,13 @@
 					<option>Cancelled</option>
 				</select>
 			</label>
-			<label>
+			<label class="no-print">
 				<input type="checkbox" bind:checked={cancelOpen} />
 				Cancel open campaign actions if the end date moves earlier
 			</label>
-			<button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save campaign'}</button>
+			<button class="no-print" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save campaign'}</button>
 		</form>
-		<section class="card">
+		<section class="card no-print">
 			<h2>Add companies</h2>
 			{#if !catalog.length}
 				<p class="muted">No companies yet. Create a company first, then add it here.</p>
@@ -246,7 +256,7 @@
 				</form>
 			{/if}
 		</section>
-		<section class="card">
+		<section class="card no-print">
 			<h2>Campaign action</h2>
 			<form onsubmit={addAction}>
 				<label>Company
@@ -262,6 +272,9 @@
 				<button type="submit">Add action</button>
 			</form>
 		</section>
+		{#if companies.length}
+			<h2 class="print-only">Companies</h2>
+		{/if}
 		<ul class="list">
 			{#each companies as row (row.id)}
 				<li>
@@ -278,7 +291,7 @@
 						<option>Lost</option>
 						<option>Not Relevant</option>
 					</select>
-					<button type="button" class="ghost" onclick={() => removeCompany(row.company_id)}>Remove</button>
+					<button type="button" class="ghost no-print" onclick={() => removeCompany(row.company_id)}>Remove</button>
 				</li>
 			{/each}
 		</ul>
@@ -291,6 +304,15 @@
 		margin: 1.5rem auto 3rem;
 		display: grid;
 		gap: 1rem;
+	}
+	.toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+	.back {
+		margin: 0;
 	}
 	.card,
 	form,
@@ -375,5 +397,34 @@
 	}
 	span {
 		color: #5b607a;
+	}
+	.print-only {
+		margin: 0 0 0.35rem;
+		font-size: 1.05rem;
+	}
+	@media print {
+		.wrap {
+			width: 100%;
+			margin: 0;
+		}
+		.card,
+		.list {
+			box-shadow: none;
+			border: 1px solid #d5d8e6;
+		}
+		li {
+			break-inside: avoid;
+		}
+		input,
+		select,
+		textarea {
+			border-color: transparent;
+			appearance: none;
+			background: transparent;
+		}
+		.error,
+		.info {
+			display: none;
+		}
 	}
 </style>

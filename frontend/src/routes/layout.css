@@ -10,3 +10,26 @@ body {
 		Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 	color: #20265e;
 }
+
+.print-only {
+	display: none;
+}
+
+@media print {
+	@page {
+		margin: 14mm;
+	}
+	html {
+		background: white;
+	}
+	header,
+	.no-print {
+		display: none !important;
+	}
+	.print-only {
+		display: block !important;
+	}
+	a {
+		text-decoration: none !important;
+	}
+}
