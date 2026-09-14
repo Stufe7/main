@@ -215,11 +215,13 @@
 	{/if}
 	{#if campaign}
 		<form class="card" onsubmit={save}>
-			<label>Name <input bind:value={campaign.name} required /></label>
+			<label class="inline">Name <input bind:value={campaign.name} required /></label>
 			<label>Description <textarea bind:value={campaign.description}></textarea></label>
-			<label>Start <input type="date" bind:value={campaign.start_date} required /></label>
-			<label>End <input type="date" bind:value={campaign.end_date} required /></label>
-			<label>Status
+			<div class="dates">
+				<label class="inline">Start <input type="date" bind:value={campaign.start_date} required /></label>
+				<label class="inline">End <input type="date" bind:value={campaign.end_date} required /></label>
+			</div>
+			<label class="inline">Status
 				<select bind:value={campaign.status}>
 					<option>Planned</option>
 					<option>Active</option>
@@ -320,6 +322,21 @@
 		display: grid;
 		gap: 0.4rem;
 	}
+	label.inline {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+	}
+	label.inline input,
+	label.inline select {
+		flex: 1;
+		min-width: 0;
+	}
+	.dates {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.6rem;
+	}
 	.card {
 		background: white;
 		border-radius: 1rem;
@@ -418,6 +435,12 @@
 		form,
 		label {
 			gap: 0.2rem;
+		}
+		.dates {
+			gap: 0.5rem;
+		}
+		label.inline {
+			gap: 0.4rem;
 		}
 		.card {
 			padding: 0.35rem 0.45rem;
