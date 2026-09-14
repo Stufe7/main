@@ -209,8 +209,20 @@ def list_companies(
             where += " and record_state = %s"
             params.append(record_state)
         if q.strip():
-            where += " and company_name ilike %s"
-            params.append(f"%{q.strip()}%")
+            pattern = f"%{q.strip()}%"
+            where += """
+              and (
+                company_name ilike %s
+                or exists (
+                  select 1 from public.company_note n
+                  where n.entity_id = company.entity_id
+                    and n.company_id = company.id
+                    and n.record_state = 'Active'
+                    and (n.note ilike %s or coalesce(n.source, '') ilike %s)
+                )
+              )
+            """
+            params.extend([pattern, pattern, pattern])
         if country.strip():
             where += " and country = %s"
             params.append(country.strip().upper())

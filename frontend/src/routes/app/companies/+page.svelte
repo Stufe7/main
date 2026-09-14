@@ -95,7 +95,7 @@
 				void load();
 			}}
 		>
-			<input bind:value={q} placeholder="Search" />
+			<input bind:value={q} placeholder="Search name or notes" />
 			<button type="submit">Search</button>
 		</form>
 		<a href="/app/companies/new">Add company</a>
