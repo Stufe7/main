@@ -320,6 +320,19 @@ def create_activity(
     with runtime_connection() as connection, connection.cursor() as cur:
         bind_request(cur, claims, entity_id)
         try:
+            if not body.contact_id:
+                raise HTTPException(status_code=400, detail="select a contact")
+            cur.execute(
+                """
+                select company_id
+                from public.contact
+                where id = %s and entity_id = %s and record_state = 'Active'
+                """,
+                (body.contact_id, entity_id),
+            )
+            contact_row = cur.fetchone()
+            if not contact_row or str(contact_row[0]) != body.company_id:
+                raise HTTPException(status_code=400, detail="contact is not at this company")
             campaign_id = body.campaign_id
             outcome = body.outcome
             if body.campaign_status:
@@ -375,6 +388,9 @@ def create_activity(
             )
             row = cur.fetchone()
             connection.commit()
+        except HTTPException:
+            connection.rollback()
+            raise
         except Exception as exc:
             connection.rollback()
             raise_pg(exc)
@@ -674,6 +690,9 @@ def complete_action(
             )
             row = cur.fetchone()
             connection.commit()
+        except HTTPException:
+            connection.rollback()
+            raise
         except Exception as exc:
             connection.rollback()
             raise_pg(exc)

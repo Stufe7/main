@@ -27,12 +27,12 @@
 	let memberships = $state<Membership[]>([]);
 	let pickCampaign = $state('');
 	let activityCampaign = $state('');
+	let activityContact = $state('');
 	let campaignStatus = $state('');
 	let error = $state('');
 	let info = $state('');
 	let busy = $state(false);
 	let loading = $state(true);
-	let subject = $state('');
 	let nextDue = $state('');
 	let nextDesc = $state('');
 	let noteText = $state('');
@@ -93,6 +93,12 @@
 		)
 	);
 
+	function personLabel(person: Contact) {
+		return person.job_title
+			? `${person.first_name} ${person.last_name} · ${person.job_title}`
+			: `${person.first_name} ${person.last_name}`;
+	}
+
 	function syncActivityCampaign() {
 		if (memberships.length === 1) {
 			activityCampaign = memberships[0].id;
@@ -101,6 +107,16 @@
 		}
 		if (!memberships.some((item) => item.id === activityCampaign)) {
 			activityCampaign = '';
+		}
+	}
+
+	function syncActivityContact() {
+		if (contacts.length === 1) {
+			activityContact = contacts[0].id;
+			return;
+		}
+		if (!contacts.some((person) => person.id === activityContact)) {
+			activityContact = '';
 		}
 	}
 	const siteHref = $derived(websiteHref(row?.website));
@@ -142,6 +158,7 @@
 				campaigns = campaignRows;
 				memberships = membershipRows;
 				syncActivityCampaign();
+				syncActivityContact();
 			});
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not load company.';
@@ -190,30 +207,35 @@
 		info = '';
 		try {
 			const campaignId = memberships.length === 1 ? memberships[0].id : activityCampaign;
-			if (memberships.length && (!campaignId || !campaignStatus)) {
-				error = 'Select the campaign status for this activity.';
+			const campaign = memberships.find((item) => item.id === campaignId);
+			if (!activityContact) {
+				error = 'Select a contact for this activity.';
+				busy = false;
+				return;
+			}
+			if (!campaign || !campaignStatus) {
+				error = 'Select the campaign and status for this activity.';
 				busy = false;
 				return;
 			}
 			const body: Record<string, unknown> = {
 				company_id: row.id,
+				contact_id: activityContact,
 				activity_type: 'Note',
-				subject
+				subject: campaign.name,
+				campaign_id: campaign.id,
+				campaign_status: campaignStatus
 			};
-			if (campaignId && campaignStatus) {
-				body.campaign_id = campaignId;
-				body.campaign_status = campaignStatus;
-			}
 			if (nextDue && nextDesc) {
 				body.follow_up = {
 					action_type: 'Task',
 					description: nextDesc,
 					due_date: nextDue,
-					campaign_id: campaignId || null
+					contact_id: activityContact,
+					campaign_id: campaign.id
 				};
 			}
 			await api('/v1/activities', { method: 'POST', body: JSON.stringify(body) });
-			subject = '';
 			nextDue = '';
 			nextDesc = '';
 			[activities, actions, memberships] = await Promise.all([
@@ -443,12 +465,25 @@
 		<section class="card">
 			<h2>Activities</h2>
 			<h3 class="no-print">Quick activity</h3>
-			<form class="no-print" onsubmit={logActivity}>
-				<label>
-					{#if vacant(subject)}<span>Subject</span>{/if}
-					<input bind:value={subject} required aria-label="Subject" />
-				</label>
-				{#if memberships.length > 1}
+			{#if !contacts.length}
+				<p class="muted no-print">Add a contact first, then log an activity.</p>
+			{:else if !memberships.length}
+				<p class="muted no-print">Add this company to a campaign first, then log an activity.</p>
+			{:else}
+				<form class="no-print" onsubmit={logActivity}>
+					<label>
+						<select
+							class:prompt={vacant(activityContact)}
+							bind:value={activityContact}
+							required
+							aria-label="Contact"
+						>
+							<option value="">Contact</option>
+							{#each contacts as person (person.id)}
+								<option value={person.id}>{personLabel(person)}</option>
+							{/each}
+						</select>
+					</label>
 					<label>
 						<select
 							class:prompt={vacant(activityCampaign)}
@@ -462,8 +497,6 @@
 							{/each}
 						</select>
 					</label>
-				{/if}
-				{#if memberships.length}
 					<label>
 						<select
 							class:prompt={vacant(campaignStatus)}
@@ -477,16 +510,16 @@
 							{/each}
 						</select>
 					</label>
-				{/if}
-				<label>
-					{#if vacant(nextDesc)}<span>Next action</span>{/if}
-					<input bind:value={nextDesc} aria-label="Next action" />
-				</label>
-				<label>
-					<input type="date" bind:value={nextDue} aria-label="Due" />
-				</label>
-				<button type="submit" disabled={busy}>Log</button>
-			</form>
+					<label>
+						{#if vacant(nextDesc)}<span>Next action</span>{/if}
+						<input bind:value={nextDesc} aria-label="Next action" />
+					</label>
+					<label>
+						<input type="date" bind:value={nextDue} aria-label="Due" />
+					</label>
+					<button type="submit" disabled={busy}>Log</button>
+				</form>
+			{/if}
 			<h3>Open actions</h3>
 			{#if actions.length}
 				<ul>
@@ -501,9 +534,14 @@
 			{#if activities.length}
 				<ul>
 					{#each activities as item (item.id)}
+						{@const person = contacts.find((row) => row.id === item.contact_id)}
 						<li>
 							<a href={`/app/activities/${item.id}`}>
-								{item.activity_date.slice(0, 10)} · {item.subject}{item.outcome ? ` · ${item.outcome}` : ''}
+								{item.activity_date.slice(0, 10)}{person
+									? ` · ${personLabel(person)}`
+									: ''}{item.subject ? ` · ${item.subject}` : ''}{item.outcome
+									? ` · ${item.outcome}`
+									: ''}
 							</a>
 						</li>
 					{/each}
