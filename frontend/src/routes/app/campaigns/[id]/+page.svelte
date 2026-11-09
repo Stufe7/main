@@ -157,19 +157,6 @@
 		}
 	}
 
-	async function setStatus(companyId: string, status: string) {
-		error = '';
-		try {
-			await api(`/v1/campaigns/${campaignId}/companies/${companyId}`, {
-				method: 'PATCH',
-				body: JSON.stringify({ status })
-			});
-			await load();
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Could not update status.';
-		}
-	}
-
 	async function addAction(event: Event) {
 		event.preventDefault();
 		error = '';
@@ -282,17 +269,7 @@
 				<li>
 					<a href={`/app/companies/${row.company_id}`}>{row.company_name}</a>
 					<span>{row.country || '—'} · {nameOf(row.effective_owner_user_id)}</span>
-					<select value={row.status} onchange={(event) => setStatus(row.company_id, event.currentTarget.value)}>
-						<option>Not Started</option>
-						<option>Contacted</option>
-						<option>Interested</option>
-						<option>Qualified</option>
-						<option>Demo / Meeting</option>
-						<option>Proposal</option>
-						<option>Won</option>
-						<option>Lost</option>
-						<option>Not Relevant</option>
-					</select>
+					<span>{row.status}</span>
 					<button type="button" class="ghost no-print" onclick={() => removeCompany(row.company_id)}>Remove</button>
 				</li>
 			{/each}

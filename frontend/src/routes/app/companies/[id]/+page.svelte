@@ -26,6 +26,8 @@
 	let campaigns = $state<Campaign[]>([]);
 	let memberships = $state<Membership[]>([]);
 	let pickCampaign = $state('');
+	let activityCampaign = $state('');
+	let campaignStatus = $state('');
 	let error = $state('');
 	let info = $state('');
 	let busy = $state(false);
@@ -35,6 +37,17 @@
 	let nextDesc = $state('');
 	let noteText = $state('');
 	let noteSource = $state('');
+	const campaignStatuses = [
+		'Not Started',
+		'Contacted',
+		'Interested',
+		'Qualified',
+		'Demo / Meeting',
+		'Proposal',
+		'Won',
+		'Lost',
+		'Not Relevant'
+	];
 
 	function blank(value: string | null | undefined) {
 		const text = (value ?? '').trim();
@@ -79,6 +92,17 @@
 				!memberships.some((row) => row.id === item.id)
 		)
 	);
+
+	function syncActivityCampaign() {
+		if (memberships.length === 1) {
+			activityCampaign = memberships[0].id;
+			if (!campaignStatus) campaignStatus = memberships[0].membership_status;
+			return;
+		}
+		if (!memberships.some((item) => item.id === activityCampaign)) {
+			activityCampaign = '';
+		}
+	}
 	const siteHref = $derived(websiteHref(row?.website));
 
 	onMount(async () => {
@@ -117,6 +141,7 @@
 				actions = actionRows;
 				campaigns = campaignRows;
 				memberships = membershipRows;
+				syncActivityCampaign();
 			});
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not load company.';
@@ -164,24 +189,39 @@
 		error = '';
 		info = '';
 		try {
+			const campaignId = memberships.length === 1 ? memberships[0].id : activityCampaign;
+			if (memberships.length && (!campaignId || !campaignStatus)) {
+				error = 'Select the campaign status for this activity.';
+				busy = false;
+				return;
+			}
 			const body: Record<string, unknown> = {
 				company_id: row.id,
 				activity_type: 'Note',
 				subject
 			};
+			if (campaignId && campaignStatus) {
+				body.campaign_id = campaignId;
+				body.campaign_status = campaignStatus;
+			}
 			if (nextDue && nextDesc) {
 				body.follow_up = {
 					action_type: 'Task',
 					description: nextDesc,
-					due_date: nextDue
+					due_date: nextDue,
+					campaign_id: campaignId || null
 				};
 			}
 			await api('/v1/activities', { method: 'POST', body: JSON.stringify(body) });
 			subject = '';
 			nextDue = '';
 			nextDesc = '';
-			activities = await api<Activity[]>(`/v1/activities?company_id=${companyId}`);
-			actions = await api<ActionItem[]>(`/v1/actions?company_id=${companyId}&horizon=open&scope=team`);
+			[activities, actions, memberships] = await Promise.all([
+				api<Activity[]>(`/v1/activities?company_id=${companyId}`),
+				api<ActionItem[]>(`/v1/actions?company_id=${companyId}&horizon=open&scope=team`),
+				api<Membership[]>(`/v1/companies/${companyId}/campaigns`).catch(() => [] as Membership[])
+			]);
+			syncActivityCampaign();
 			info = 'Activity logged.';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not save activity.';
@@ -254,6 +294,7 @@
 			const chosen = campaigns.find((item) => item.id === pickCampaign);
 			pickCampaign = '';
 			memberships = await api<Membership[]>(`/v1/companies/${companyId}/campaigns`);
+			syncActivityCampaign();
 			info = chosen ? `Added to ${chosen.name}.` : 'Added to campaign.';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not add to campaign.';
@@ -407,6 +448,36 @@
 					{#if vacant(subject)}<span>Subject</span>{/if}
 					<input bind:value={subject} required aria-label="Subject" />
 				</label>
+				{#if memberships.length > 1}
+					<label>
+						<select
+							class:prompt={vacant(activityCampaign)}
+							bind:value={activityCampaign}
+							required
+							aria-label="Campaign"
+						>
+							<option value="">Campaign</option>
+							{#each memberships as item (item.id)}
+								<option value={item.id}>{item.name}</option>
+							{/each}
+						</select>
+					</label>
+				{/if}
+				{#if memberships.length}
+					<label>
+						<select
+							class:prompt={vacant(campaignStatus)}
+							bind:value={campaignStatus}
+							required
+							aria-label="Status"
+						>
+							<option value="">Status</option>
+							{#each campaignStatuses as status (status)}
+								<option value={status}>{status}</option>
+							{/each}
+						</select>
+					</label>
+				{/if}
 				<label>
 					{#if vacant(nextDesc)}<span>Next action</span>{/if}
 					<input bind:value={nextDesc} aria-label="Next action" />
@@ -431,7 +502,9 @@
 				<ul>
 					{#each activities as item (item.id)}
 						<li>
-							<a href={`/app/activities/${item.id}`}>{item.activity_date.slice(0, 10)} · {item.subject}</a>
+							<a href={`/app/activities/${item.id}`}>
+								{item.activity_date.slice(0, 10)} · {item.subject}{item.outcome ? ` · ${item.outcome}` : ''}
+							</a>
 						</li>
 					{/each}
 				</ul>

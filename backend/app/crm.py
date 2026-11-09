@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.authn import Claims, bearer_claims, require_user_id
+from app.campaigns import CC_STATUSES
 from app.db import runtime_connection
 from app.tenant import bind_request, raise_pg, require_entity_id
 
@@ -38,6 +39,7 @@ class ActivityIn(BaseModel):
     outcome: str | None = None
     follow_up: FollowUpIn | None = None
     campaign_id: str | None = None
+    campaign_status: str | None = None
 
 
 class ActivityOut(BaseModel):
@@ -97,6 +99,7 @@ class CompleteIn(BaseModel):
     outcome: str | None = None
     description: str | None = None
     follow_up: FollowUpIn | None = None
+    campaign_status: str | None = None
 
 
 class CancelIn(BaseModel):
@@ -121,6 +124,50 @@ class HomeOut(BaseModel):
 
 class AckSelectedIn(BaseModel):
     ids: list[str] = Field(default_factory=list)
+
+
+def _apply_campaign_status(
+    cur,
+    *,
+    entity_id: str,
+    company_id: str,
+    campaign_id: str | None,
+    status: str | None,
+    user_id: str,
+) -> str | None:
+    if not status:
+        return campaign_id
+    if status not in CC_STATUSES:
+        raise HTTPException(status_code=400, detail="invalid campaign status")
+    resolved = campaign_id
+    if not resolved:
+        cur.execute(
+            """
+            select campaign_id
+            from public.campaign_company
+            where entity_id = %s and company_id = %s and record_state = 'Active'
+            """,
+            (entity_id, company_id),
+        )
+        rows = cur.fetchall()
+        if len(rows) == 1:
+            resolved = str(rows[0][0])
+        elif len(rows) > 1:
+            raise HTTPException(status_code=400, detail="select a campaign")
+        else:
+            raise HTTPException(status_code=400, detail="company is not on a campaign")
+    cur.execute(
+        """
+        update public.campaign_company
+        set status = %s, updated_by_user_id = %s, updated_at = now()
+        where entity_id = %s and campaign_id = %s and company_id = %s
+          and record_state = 'Active'
+        """,
+        (status, user_id, entity_id, resolved, company_id),
+    )
+    if cur.rowcount == 0:
+        raise HTTPException(status_code=400, detail="company is not on that campaign")
+    return resolved
 
 
 def _activity_row(row: tuple) -> ActivityOut:
@@ -273,6 +320,19 @@ def create_activity(
     with runtime_connection() as connection, connection.cursor() as cur:
         bind_request(cur, claims, entity_id)
         try:
+            campaign_id = body.campaign_id
+            outcome = body.outcome
+            if body.campaign_status:
+                campaign_id = _apply_campaign_status(
+                    cur,
+                    entity_id=entity_id,
+                    company_id=body.company_id,
+                    campaign_id=body.campaign_id,
+                    status=body.campaign_status,
+                    user_id=user_id,
+                )
+                if not outcome:
+                    outcome = body.campaign_status
             cur.execute(
                 """
                 insert into public.activity (
@@ -287,12 +347,12 @@ def create_activity(
                     entity_id,
                     body.company_id,
                     body.contact_id,
-                    body.campaign_id,
+                    campaign_id,
                     body.activity_type,
                     when,
                     body.subject.strip(),
                     body.description,
-                    body.outcome,
+                    outcome,
                     user_id,
                     user_id,
                 ),
@@ -307,7 +367,7 @@ def create_activity(
                     follow=body.follow_up,
                     source_activity_id=activity_id,
                     default_contact=body.contact_id,
-                    campaign_id=body.campaign_id,
+                    campaign_id=campaign_id,
                 )
             cur.execute(
                 f"{_ACT_SELECT} where a.id = %s and a.entity_id = %s",
@@ -551,6 +611,18 @@ def complete_action(
         company_id, contact_id = str(current[0]), str(current[1]) if current[1] else None
         campaign_id = str(current[3]) if current[3] else None
         try:
+            outcome = body.outcome
+            if body.campaign_status:
+                campaign_id = _apply_campaign_status(
+                    cur,
+                    entity_id=entity_id,
+                    company_id=company_id,
+                    campaign_id=campaign_id,
+                    status=body.campaign_status,
+                    user_id=user_id,
+                )
+                if not outcome:
+                    outcome = body.campaign_status
             cur.execute(
                 """
                 insert into public.activity (
@@ -569,7 +641,7 @@ def complete_action(
                     body.activity_type,
                     body.subject.strip(),
                     body.description,
-                    body.outcome,
+                    outcome,
                     action_id,
                     user_id,
                     user_id,
