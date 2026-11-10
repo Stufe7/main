@@ -37,6 +37,9 @@
 	let loading = $state(true);
 	let nextDue = $state('');
 	let nextDesc = $state('');
+	let closeId = $state('');
+	let closeDue = $state('');
+	let closeDesc = $state('');
 	let noteText = $state('');
 	let noteSource = $state('');
 	const campaignStatuses = [
@@ -264,6 +267,66 @@
 			info = 'Activity logged.';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not save activity.';
+		} finally {
+			busy = false;
+		}
+	}
+
+	function openClose(id: string) {
+		if (closeId === id) {
+			closeId = '';
+			closeDue = '';
+			closeDesc = '';
+			return;
+		}
+		closeId = id;
+		closeDue = '';
+		closeDesc = '';
+	}
+
+	async function closeAction(event: Event) {
+		event.preventDefault();
+		const item = actions.find((row) => row.id === closeId);
+		if (!item) return;
+		if (Boolean(closeDesc.trim()) !== Boolean(closeDue)) {
+			error = 'Enter both the next action and due date, or leave both blank.';
+			return;
+		}
+		busy = true;
+		error = '';
+		info = '';
+		try {
+			const body: Record<string, unknown> = {
+				activity_type: 'Note',
+				subject: item.description,
+				outcome: 'Completed'
+			};
+			if (closeDesc.trim() && closeDue) {
+				body.follow_up = {
+					action_type: item.action_type || 'Task',
+					description: closeDesc.trim(),
+					due_date: closeDue,
+					contact_id: item.contact_id,
+					campaign_id: item.campaign_id
+				};
+			}
+			await api(`/v1/actions/${item.id}/complete`, {
+				method: 'POST',
+				body: JSON.stringify(body)
+			});
+			const hadFollowUp = Boolean(closeDesc.trim() && closeDue);
+			closeId = '';
+			closeDue = '';
+			closeDesc = '';
+			[activities, actions, memberships] = await Promise.all([
+				api<Activity[]>(`/v1/activities?company_id=${companyId}`),
+				api<ActionItem[]>(`/v1/actions?company_id=${companyId}&horizon=open&scope=team`),
+				api<Membership[]>(`/v1/companies/${companyId}/campaigns`).catch(() => [] as Membership[])
+			]);
+			syncActivityCampaign();
+			info = hadFollowUp ? 'Action closed and follow-up opened.' : 'Action closed.';
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not close action.';
 		} finally {
 			busy = false;
 		}
@@ -573,7 +636,30 @@
 			{#if actions.length}
 				<ul>
 					{#each actions as item (item.id)}
-						<li>{item.due_date} · {item.priority} · {item.description}</li>
+						<li class="open-action">
+							<div class="action-line">
+								<span>{item.due_date} · {item.priority} · {item.description}</span>
+								<button
+									type="button"
+									class="ghost small no-print"
+									onclick={() => openClose(item.id)}
+								>
+									{closeId === item.id ? 'Cancel' : 'Close'}
+								</button>
+							</div>
+							{#if closeId === item.id}
+								<form class="close-form no-print" onsubmit={closeAction}>
+									<label>
+										{#if vacant(closeDesc)}<span>Next action</span>{/if}
+										<input bind:value={closeDesc} aria-label="Next action" />
+									</label>
+									<label>
+										<input type="date" bind:value={closeDue} aria-label="Due" />
+									</label>
+									<button type="submit" disabled={busy}>Save</button>
+								</form>
+							{/if}
+						</li>
 					{/each}
 				</ul>
 			{:else}
@@ -795,6 +881,20 @@
 		justify-content: space-between;
 		gap: 0.75rem;
 		align-items: baseline;
+	}
+	.card li.open-action {
+		display: grid;
+		gap: 0.4rem;
+	}
+	.action-line {
+		display: flex;
+		justify-content: space-between;
+		gap: 0.75rem;
+		align-items: baseline;
+	}
+	.close-form {
+		display: grid;
+		gap: 0.4rem;
 	}
 	.error,
 	.info {

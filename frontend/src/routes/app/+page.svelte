@@ -57,17 +57,20 @@
 		event.preventDefault();
 		error = '';
 		try {
+			const item = home?.actions.find((row) => row.id === completeId);
 			const body: Record<string, unknown> = {
 				activity_type: 'Note',
-				subject: 'Completed action',
+				subject: item?.description || 'Completed action',
 				outcome
 			};
 			if (nextDue && nextDesc) {
 				body.follow_up = {
-					action_type: 'Task',
+					action_type: item?.action_type || 'Task',
 					description: nextDesc,
 					due_date: nextDue,
-					priority: 'Normal'
+					priority: 'Normal',
+					contact_id: item?.contact_id,
+					campaign_id: item?.campaign_id
 				};
 			}
 			await api(`/v1/actions/${completeId}/complete`, {

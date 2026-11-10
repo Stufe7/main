@@ -251,6 +251,7 @@ export type ActionItem = {
 	priority: string;
 	status: string;
 	source_activity_id: string | null;
+	campaign_id: string | null;
 };
 
 export type HomeInfo = {

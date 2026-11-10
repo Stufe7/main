@@ -5,21 +5,53 @@
 	import { api, withActiveEntity, type ActionItem, type Activity, type Contact } from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
 
+	type Membership = { id: string; name: string; status: string; membership_status: string };
+
 	const contactId = $derived(page.params.id);
 	let row = $state<Contact | null>(null);
 	let activities = $state<Activity[]>([]);
 	let actions = $state<ActionItem[]>([]);
+	let memberships = $state<Membership[]>([]);
 	let error = $state('');
-	let subject = $state('');
+	let activityCampaign = $state('');
+	let campaignStatus = $state('');
 	let nextDue = $state('');
 	let nextDesc = $state('');
+	let closeId = $state('');
+	let closeDue = $state('');
+	let closeDesc = $state('');
+	const campaignStatuses = [
+		'Not Started',
+		'Contacted',
+		'Interested',
+		'Qualified',
+		'Demo / Meeting',
+		'Proposal',
+		'Won',
+		'Lost',
+		'Not Relevant'
+	];
+
+	function syncActivityCampaign() {
+		if (memberships.length === 1) {
+			activityCampaign = memberships[0].id;
+			if (!campaignStatus) campaignStatus = memberships[0].membership_status;
+			return;
+		}
+		if (!memberships.some((item) => item.id === activityCampaign)) {
+			activityCampaign = '';
+		}
+	}
 
 	async function load() {
-		[row, activities, actions] = await Promise.all([
-			api<Contact>(`/v1/contacts/${contactId}`),
+		const contact = await api<Contact>(`/v1/contacts/${contactId}`);
+		row = contact;
+		[activities, actions, memberships] = await Promise.all([
 			api<Activity[]>(`/v1/activities?contact_id=${contactId}`),
-			api<ActionItem[]>(`/v1/actions?contact_id=${contactId}&horizon=open&scope=team`)
+			api<ActionItem[]>(`/v1/actions?contact_id=${contactId}&horizon=open&scope=team`),
+			api<Membership[]>(`/v1/companies/${contact.company_id}/campaigns`).catch(() => [] as Membership[])
 		]);
+		syncActivityCampaign();
 	}
 
 	onMount(async () => {
@@ -66,27 +98,84 @@
 		}
 	}
 
+	function openClose(id: string) {
+		if (closeId === id) {
+			closeId = '';
+			closeDue = '';
+			closeDesc = '';
+			return;
+		}
+		closeId = id;
+		closeDue = '';
+		closeDesc = '';
+	}
+
+	async function closeAction(event: Event) {
+		event.preventDefault();
+		const item = actions.find((row) => row.id === closeId);
+		if (!item || !row) return;
+		if (Boolean(closeDesc.trim()) !== Boolean(closeDue)) {
+			error = 'Enter both the next action and due date, or leave both blank.';
+			return;
+		}
+		error = '';
+		try {
+			const body: Record<string, unknown> = {
+				activity_type: 'Note',
+				subject: item.description,
+				outcome: 'Completed'
+			};
+			if (closeDesc.trim() && closeDue) {
+				body.follow_up = {
+					action_type: item.action_type || 'Task',
+					description: closeDesc.trim(),
+					due_date: closeDue,
+					contact_id: row.id,
+					campaign_id: item.campaign_id
+				};
+			}
+			await api(`/v1/actions/${item.id}/complete`, {
+				method: 'POST',
+				body: JSON.stringify(body)
+			});
+			closeId = '';
+			closeDue = '';
+			closeDesc = '';
+			await load();
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not close action.';
+		}
+	}
+
 	async function logActivity(event: Event) {
 		event.preventDefault();
 		if (!row) return;
 		error = '';
+		const campaignId = memberships.length === 1 ? memberships[0].id : activityCampaign;
+		const campaign = memberships.find((item) => item.id === campaignId);
+		if (!campaign || !campaignStatus) {
+			error = 'Select the campaign and status for this activity.';
+			return;
+		}
 		try {
 			const body: Record<string, unknown> = {
 				company_id: row.company_id,
 				contact_id: row.id,
 				activity_type: 'Note',
-				subject
+				subject: campaign.name,
+				campaign_id: campaign.id,
+				campaign_status: campaignStatus
 			};
 			if (nextDue && nextDesc) {
 				body.follow_up = {
 					action_type: 'Task',
 					description: nextDesc,
 					due_date: nextDue,
-					contact_id: row.id
+					contact_id: row.id,
+					campaign_id: campaign.id
 				};
 			}
 			await api('/v1/activities', { method: 'POST', body: JSON.stringify(body) });
-			subject = '';
 			nextDue = '';
 			nextDesc = '';
 			await load();
@@ -122,16 +211,49 @@
 			</div>
 		</form>
 		<h2>Quick activity</h2>
-		<form onsubmit={logActivity}>
-			<label>Subject <input bind:value={subject} required /></label>
-			<label>Next action <input bind:value={nextDesc} /></label>
-			<label>Due <input type="date" bind:value={nextDue} /></label>
-			<button type="submit">Log</button>
-		</form>
+		{#if !memberships.length}
+			<p class="muted">Add this company to a campaign first, then log an activity.</p>
+		{:else}
+			<form onsubmit={logActivity}>
+				<label>Campaign
+					<select bind:value={activityCampaign} required>
+						<option value="">Campaign</option>
+						{#each memberships as item (item.id)}
+							<option value={item.id}>{item.name}</option>
+						{/each}
+					</select>
+				</label>
+				<label>Status
+					<select bind:value={campaignStatus} required>
+						<option value="">Status</option>
+						{#each campaignStatuses as status (status)}
+							<option value={status}>{status}</option>
+						{/each}
+					</select>
+				</label>
+				<label>Next action <input bind:value={nextDesc} /></label>
+				<label>Due <input type="date" bind:value={nextDue} /></label>
+				<button type="submit">Log</button>
+			</form>
+		{/if}
 		<h2>Open actions</h2>
 		<ul>
 			{#each actions as item (item.id)}
-				<li>{item.due_date} · {item.action_type}: {item.description}</li>
+				<li>
+					<div class="action-line">
+						<span>{item.due_date} · {item.action_type}: {item.description}</span>
+						<button type="button" class="ghost" onclick={() => openClose(item.id)}>
+							{closeId === item.id ? 'Cancel' : 'Close'}
+						</button>
+					</div>
+					{#if closeId === item.id}
+						<form onsubmit={closeAction}>
+							<label>Next action <input bind:value={closeDesc} /></label>
+							<label>Due <input type="date" bind:value={closeDue} /></label>
+							<button type="submit">Save</button>
+						</form>
+					{/if}
+				</li>
 			{/each}
 		</ul>
 		<h2>History</h2>
@@ -159,20 +281,30 @@
 		display: grid;
 		gap: 0.35rem;
 	}
-	.row {
+	.row,
+	.action-line {
 		display: flex;
 		gap: 0.6rem;
 	}
+	.action-line {
+		justify-content: space-between;
+		align-items: baseline;
+	}
 	input,
+	select,
 	textarea,
 	button {
 		font: inherit;
 	}
 	input,
+	select,
 	textarea {
 		border: 1px solid #d5d8e6;
 		border-radius: 0.5rem;
 		padding: 0.5rem 0.7rem;
+	}
+	.muted {
+		color: #5b607a;
 	}
 	button {
 		border: 0;
