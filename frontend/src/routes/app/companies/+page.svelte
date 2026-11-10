@@ -17,9 +17,10 @@
 		error = '';
 		loading = true;
 		try {
-			const params = new URLSearchParams({ include_notes: 'true' });
+			const params = new URLSearchParams();
 			if (q.trim()) params.set('q', q.trim());
-			rows = await api<Company[]>(`/v1/companies?${params}`);
+			const query = params.toString();
+			rows = await api<Company[]>(query ? `/v1/companies?${query}` : '/v1/companies');
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Could not load companies.';
 		} finally {
@@ -96,7 +97,7 @@
 				void load();
 			}}
 		>
-			<input bind:value={q} placeholder="Search name, channel, segment, or notes" />
+			<input bind:value={q} placeholder="Search name, channel, or segment" />
 			<button type="submit">Search</button>
 		</form>
 		<a href="/app/companies/new">Add company</a>
@@ -128,21 +129,14 @@
 					<a href={`/app/companies/${row.id}`}>
 						<div>
 							<strong>{row.company_name}</strong>
-							{#if row.channel}
-								<p class="notes">{row.channel}{row.segment ? ` · ${row.segment}` : ''}</p>
+							{#if row.channel || row.segment}
+								<p class="sub">{[row.channel, row.segment].filter(Boolean).join(' · ')}</p>
 							{/if}
 							{#if row.nature_of_business}
-								<p class="notes">{row.nature_of_business}</p>
-							{/if}
-							{#if row.notes?.length}
-								<p class="notes">
-									{row.notes
-										.map((item) => (item.source ? `${item.note} (${item.source})` : item.note))
-										.join(' · ')}
-								</p>
+								<p class="sub">{row.nature_of_business}</p>
 							{/if}
 						</div>
-						<span>{row.status} · {row.country || '—'}{row.parent_company ? ` · ${row.parent_company}` : ''}</span>
+						<span>{row.status} · {row.country || '—'}</span>
 					</a>
 				</li>
 			{/each}
@@ -230,7 +224,7 @@
 		color: #5b607a;
 		font-size: 0.9rem;
 	}
-	.notes {
+	.sub {
 		margin: 0.25rem 0 0;
 		color: #5b607a;
 		font-size: 0.9rem;
