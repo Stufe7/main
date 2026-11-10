@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { api, withActiveEntity, type Company, type Member } from '$lib/api/client';
+	import { api, withActiveEntity, type Company } from '$lib/api/client';
 	import { requireSession } from '$lib/auth/session.svelte';
 
 	type Campaign = {
@@ -22,14 +22,11 @@
 		company_name: string;
 		country: string | null;
 		status: string;
-		owner_user_id: string | null;
-		effective_owner_user_id: string | null;
 		next_action_due_date: string | null;
 	};
 
 	const campaignId = $derived(page.params.id);
 	let campaign = $state<Campaign | null>(null);
-	let members = $state<Member[]>([]);
 	let companies = $state<Row[]>([]);
 	let catalog = $state<Company[]>([]);
 	let addCompanyId = $state('');
@@ -41,12 +38,6 @@
 	let cancelOpen = $state(false);
 	let busy = $state(false);
 	let filter = $state('');
-
-	const nameOf = (id: string | null) => {
-		if (!id) return 'Unassigned';
-		const member = members.find((row) => row.user_id === id);
-		return member ? member.email : id.slice(0, 8);
-	};
 
 	const available = $derived(
 		catalog.filter((row) => {
@@ -60,16 +51,14 @@
 	async function load() {
 		const id = campaignId;
 		if (!id) return;
-		const [cam, memberRows, companyRows, catalogRows] = await Promise.all([
+		const [cam, companyRows, catalogRows] = await Promise.all([
 			api<Campaign>(`/v1/campaigns/${id}`),
-			api<Member[]>('/v1/members'),
 			api<Row[]>(`/v1/campaigns/${id}/companies`),
 			api<Company[]>('/v1/companies')
 		]);
 		campaign = cam;
 		if (campaign.start_date) campaign.start_date = campaign.start_date.slice(0, 10);
 		if (campaign.end_date) campaign.end_date = campaign.end_date.slice(0, 10);
-		members = memberRows;
 		companies = companyRows;
 		catalog = catalogRows;
 	}
@@ -267,10 +256,23 @@
 		<ul class="list">
 			{#each companies as row (row.id)}
 				<li>
-					<a href={`/app/companies/${row.company_id}`}>{row.company_name}</a>
-					<span>{row.country || '—'} · {nameOf(row.effective_owner_user_id)}</span>
-					<span>{row.status}</span>
-					<button type="button" class="ghost no-print" onclick={() => removeCompany(row.company_id)}>Remove</button>
+					<a class="name" href={`/app/companies/${row.company_id}`}>{row.company_name}</a>
+					<span class="meta">{row.country || '—'}</span>
+					<span class="meta">{row.status}</span>
+					<button
+						type="button"
+						class="icon no-print"
+						aria-label={`Remove ${row.company_name}`}
+						title="Remove"
+						onclick={() => removeCompany(row.company_id)}
+					>
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<polyline points="3 6 5 6 21 6" />
+							<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+							<line x1="10" y1="11" x2="10" y2="17" />
+							<line x1="14" y1="11" x2="14" y2="17" />
+						</svg>
+					</button>
 				</li>
 			{/each}
 		</ul>
@@ -330,11 +332,48 @@
 	}
 	li {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 0.6rem;
+		flex-wrap: nowrap;
+		gap: 0.75rem;
 		align-items: center;
 		padding: 0.75rem 1rem;
 		border-bottom: 1px solid #eef0f6;
+	}
+	.name {
+		flex: 1;
+		min-width: 0;
+	}
+	.meta {
+		flex-shrink: 0;
+		white-space: nowrap;
+		color: #5b607a;
+	}
+	.icon {
+		margin-left: auto;
+		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2rem;
+		height: 2rem;
+		padding: 0;
+		border: 0;
+		border-radius: 0.45rem;
+		background: none;
+		color: #5b607a;
+	}
+	.icon:hover,
+	.icon:focus-visible {
+		color: #8a1f1f;
+		background: #fde8e8;
+	}
+	.icon svg {
+		width: 1.05rem;
+		height: 1.05rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
 	}
 	input,
 	textarea,
@@ -388,9 +427,6 @@
 	a {
 		color: #20265e;
 		font-weight: 650;
-	}
-	span {
-		color: #5b607a;
 	}
 	.print-only {
 		margin: 0 0 0.35rem;
