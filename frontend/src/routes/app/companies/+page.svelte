@@ -127,7 +127,7 @@
 			{#each rows as row (row.id)}
 				<li>
 					<a href={`/app/companies/${row.id}`}>
-						<div>
+						<div class="main">
 							<strong>{row.company_name}</strong>
 							{#if row.channel || row.segment}
 								<p class="sub">{[row.channel, row.segment].filter(Boolean).join(' · ')}</p>
@@ -136,7 +136,7 @@
 								<p class="sub">{row.nature_of_business}</p>
 							{/if}
 						</div>
-						<span>{row.status} · {row.country || '—'}</span>
+						<span class="meta">{row.status} · {row.country || '—'}</span>
 					</a>
 				</li>
 			{/each}
@@ -214,13 +214,20 @@
 	li a {
 		display: flex;
 		justify-content: space-between;
+		align-items: flex-start;
 		gap: 1rem;
 		padding: 0.85rem 1rem;
 		border-bottom: 1px solid #eef0f6;
 		color: inherit;
 		text-decoration: none;
 	}
-	li span {
+	.main {
+		min-width: 0;
+		flex: 1;
+	}
+	.meta {
+		flex-shrink: 0;
+		white-space: nowrap;
 		color: #5b607a;
 		font-size: 0.9rem;
 	}
