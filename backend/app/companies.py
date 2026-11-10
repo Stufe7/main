@@ -27,6 +27,8 @@ class CompanyOut(BaseModel):
     website: str | None
     telephone: str | None
     nature_of_business: str | None
+    channel: str | None = None
+    segment: str | None = None
     owner_user_id: str | None
     next_action_due_date: str | None
     notes: list["CompanyNoteOut"] = []
@@ -62,6 +64,8 @@ class CompanyIn(BaseModel):
     website: str | None = None
     telephone: str | None = None
     nature_of_business: str | None = None
+    channel: str | None = None
+    segment: str | None = None
     owner_user_id: str | None = None
     record_state: str | None = None
 
@@ -88,7 +92,17 @@ def _row(row: tuple) -> CompanyOut:
         nature_of_business=row[10],
         owner_user_id=str(row[11]) if row[11] else None,
         next_action_due_date=row[12].isoformat() if row[12] else None,
+        channel=row[13] if len(row) > 13 else None,
+        segment=row[14] if len(row) > 14 else None,
     )
+
+
+def _channel_pair(channel: str | None, segment: str | None) -> tuple[str | None, str | None]:
+    channel_text = (channel or "").strip() or None
+    segment_text = (segment or "").strip() or None
+    if segment_text and not channel_text:
+        raise HTTPException(status_code=400, detail="segment requires a channel")
+    return channel_text, segment_text
 
 
 def _note_out(row: tuple) -> CompanyNoteOut:
@@ -215,6 +229,8 @@ def list_companies(
               and (
                 company_name ilike %s
                 or coalesce(nature_of_business, '') ilike %s
+                or coalesce(channel, '') ilike %s
+                or coalesce(segment, '') ilike %s
                 or exists (
                   select 1 from public.company_note n
                   where n.entity_id = company.entity_id
@@ -224,7 +240,7 @@ def list_companies(
                 )
               )
             """
-            params.extend([pattern, pattern, pattern, pattern])
+            params.extend([pattern, pattern, pattern, pattern, pattern, pattern])
         if country.strip():
             where += " and country = %s"
             params.append(country.strip().upper())
@@ -232,7 +248,7 @@ def list_companies(
             f"""
             select id, company_name, parent_company, status, record_state, country,
                    city, address, website, telephone, nature_of_business,
-                   owner_user_id, next_action_due_date
+                   owner_user_id, next_action_due_date, channel, segment
             from public.company
             where {where}
             order by lower(company_name)
@@ -244,6 +260,39 @@ def list_companies(
         if include_notes:
             return _attach_notes(cur, entity_id, items)
         return items
+
+
+class CompanyTaxonomyOut(BaseModel):
+    channels: list[str]
+    segments: dict[str, list[str]]
+
+
+@router.get("/companies/taxonomy", response_model=CompanyTaxonomyOut)
+def company_taxonomy(
+    claims: Annotated[Claims, Depends(bearer_claims)],
+    user_id: Annotated[str, Depends(require_user_id)],
+    entity_id: Annotated[str, Depends(require_entity_id)],
+) -> CompanyTaxonomyOut:
+    with runtime_connection() as connection, connection.cursor() as cur:
+        bind_request(cur, claims, entity_id)
+        cur.execute(
+            """
+            select distinct channel, segment
+            from public.company
+            where entity_id = %s and record_state = 'Active' and channel is not null
+            order by lower(channel), lower(coalesce(segment, ''))
+            """,
+            (entity_id,),
+        )
+        channels: list[str] = []
+        segments: dict[str, list[str]] = {}
+        for channel, segment in cur.fetchall():
+            if channel not in segments:
+                channels.append(channel)
+                segments[channel] = []
+            if segment and segment not in segments[channel]:
+                segments[channel].append(segment)
+        return CompanyTaxonomyOut(channels=channels, segments=segments)
 
 
 def _require_entity_admin(cur, user_id: str, entity_id: str) -> None:
@@ -273,7 +322,8 @@ def export_companies(
             cur.execute(
                 """
                 select id, company_name, parent_company, country, city, address,
-                       website, telephone, nature_of_business, status, owner_user_id
+                       website, telephone, nature_of_business, channel, segment,
+                       status, owner_user_id
                 from public.company
                 where entity_id = %s and record_state = 'Active'
                 order by lower(company_name)
@@ -298,10 +348,12 @@ def export_companies(
                     "Website": row[6],
                     "Telephone": row[7],
                     "Nature of Business": row[8],
-                    "Company Status": row[9],
+                    "Channel": row[9],
+                    "Segment": row[10],
+                    "Company Status": row[11],
                     "Note": " | ".join(item.note for item in notes),
                     "Note Source": " | ".join(item.source or "" for item in notes),
-                    "Owner Email": owners.get(str(row[10])) if row[10] else None,
+                    "Owner Email": owners.get(str(row[12])) if row[12] else None,
                 }
             )
     payload = workbook_bytes(rows)
@@ -365,10 +417,10 @@ def import_companies(
                         """
                         insert into public.company (
                           entity_id, company_name, parent_company, country, city, address,
-                          website, telephone, nature_of_business, status,
+                          website, telephone, nature_of_business, channel, segment, status,
                           record_state, owner_user_id, created_by_user_id, updated_by_user_id
                         )
-                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s)
+                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s)
                         returning id
                         """,
                         (
@@ -381,6 +433,8 @@ def import_companies(
                             row["website"],
                             row["telephone"],
                             row["nature_of_business"],
+                            row["channel"],
+                            row["segment"],
                             row["status"] or "Prospect",
                             row["owner_user_id"] or user_id,
                             user_id,
@@ -401,6 +455,8 @@ def import_companies(
                             website = coalesce(%s, website),
                             telephone = coalesce(%s, telephone),
                             nature_of_business = coalesce(%s, nature_of_business),
+                            channel = coalesce(%s, channel),
+                            segment = coalesce(%s, segment),
                             status = coalesce(%s, status),
                             owner_user_id = coalesce(%s, owner_user_id),
                             updated_by_user_id = %s,
@@ -416,6 +472,8 @@ def import_companies(
                             row["website"],
                             row["telephone"],
                             row["nature_of_business"],
+                            row["channel"],
+                            row["segment"],
                             row["status"],
                             row["owner_user_id"],
                             user_id,
@@ -445,19 +503,20 @@ def create_company(
     entity_id: Annotated[str, Depends(require_entity_id)],
 ) -> CompanyOut:
     owner = body.owner_user_id or user_id
+    channel, segment = _channel_pair(body.channel, body.segment)
     with runtime_connection() as connection, connection.cursor() as cur:
         bind_request(cur, claims, entity_id)
         cur.execute(
             """
             insert into public.company (
               entity_id, company_name, parent_company, country, city, address,
-              website, telephone, nature_of_business, status, record_state,
+              website, telephone, nature_of_business, channel, segment, status, record_state,
               owner_user_id, created_by_user_id, updated_by_user_id
             )
-            values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s)
+            values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s)
             returning id, company_name, parent_company, status, record_state, country,
                       city, address, website, telephone, nature_of_business,
-                      owner_user_id, next_action_due_date
+                      owner_user_id, next_action_due_date, channel, segment
             """,
             (
                 entity_id,
@@ -469,6 +528,8 @@ def create_company(
                 body.website,
                 body.telephone,
                 body.nature_of_business,
+                channel,
+                segment,
                 body.status,
                 owner,
                 user_id,
@@ -493,7 +554,7 @@ def get_company(
             """
             select id, company_name, parent_company, status, record_state, country,
                    city, address, website, telephone, nature_of_business,
-                   owner_user_id, next_action_due_date
+                   owner_user_id, next_action_due_date, channel, segment
             from public.company
             where id = %s and entity_id = %s
             """,
@@ -570,6 +631,7 @@ def patch_company(
         previous_owner = str(current[0]) if current[0] else None
         new_owner = body.owner_user_id
         record_state = body.record_state or "Active"
+        channel, segment = _channel_pair(body.channel, body.segment)
         cur.execute(
             """
             update public.company
@@ -581,6 +643,8 @@ def patch_company(
                 website = %s,
                 telephone = %s,
                 nature_of_business = %s,
+                channel = %s,
+                segment = %s,
                 status = %s,
                 record_state = %s,
                 owner_user_id = %s,
@@ -589,7 +653,7 @@ def patch_company(
             where id = %s and entity_id = %s
             returning id, company_name, parent_company, status, record_state, country,
                       city, address, website, telephone, nature_of_business,
-                      owner_user_id, next_action_due_date
+                      owner_user_id, next_action_due_date, channel, segment
             """,
             (
                 body.company_name.strip(),
@@ -600,6 +664,8 @@ def patch_company(
                 body.website,
                 body.telephone,
                 body.nature_of_business,
+                channel,
+                segment,
                 body.status,
                 record_state,
                 new_owner,

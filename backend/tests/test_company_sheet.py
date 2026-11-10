@@ -32,3 +32,13 @@ def test_roundtrip_and_upsert_actions() -> None:
     assert update["company_id"] == company_id
     assert create["action"] == "create"
     assert create["company_name"] == "New Harbour"
+    assert create["channel"] is None
+    assert create["segment"] is None
+    bad = classify_row(
+        {"Company Name": "Solo", "Country": "SG", "Segment": "Healthcare"},
+        {},
+        {},
+        {},
+    )
+    assert bad["action"] == "skip"
+    assert bad["error"] == "Segment requires Channel"

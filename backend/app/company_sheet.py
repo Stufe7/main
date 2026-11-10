@@ -17,6 +17,8 @@ HEADERS = [
     "Website",
     "Telephone",
     "Nature of Business",
+    "Channel",
+    "Segment",
     "Company Status",
     "Note",
     "Note Source",
@@ -71,7 +73,9 @@ def read_rows(payload: bytes) -> list[dict[str, str | None]]:
     names = [
         {"Legal Name": "Parent Company", "Notes": "Note"}.get(name, name) for name in names
     ]
-    required = [name for name in HEADERS if name not in ("Note", "Note Source")]
+    required = [
+        name for name in HEADERS if name not in ("Note", "Note Source", "Channel", "Segment")
+    ]
     missing = [name for name in required if name not in names]
     if missing:
         raise ValueError(f"Excel is missing columns: {', '.join(missing)}")
@@ -101,10 +105,14 @@ def classify_row(
     owner_email = raw.get("Owner Email")
     company_id = _as_uuid(raw.get("Company ID"))
     error = None
+    channel = raw.get("Channel")
+    segment = raw.get("Segment")
     if status and status not in STATUSES:
         error = "invalid Company Status"
     elif country and len(country) != 2:
         error = "Country must be a 2-letter code"
+    elif segment and not channel:
+        error = "Segment requires Channel"
     owner_id = members.get(owner_email.casefold()) if owner_email else None
     if owner_email and not owner_id:
         error = "Owner Email is not a member of this entity"
@@ -136,6 +144,8 @@ def classify_row(
         "website": raw.get("Website"),
         "telephone": raw.get("Telephone"),
         "nature_of_business": raw.get("Nature of Business"),
+        "channel": channel,
+        "segment": segment if channel else None,
         "status": status if status in STATUSES else None,
         "note": raw.get("Note"),
         "note_source": raw.get("Note Source"),

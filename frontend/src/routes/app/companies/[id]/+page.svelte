@@ -9,6 +9,7 @@
 		type Activity,
 		type Company,
 		type CompanyNote,
+		type CompanyTaxonomy,
 		type Contact,
 		type Member
 	} from '$lib/api/client';
@@ -25,6 +26,7 @@
 	let actions = $state<ActionItem[]>([]);
 	let campaigns = $state<Campaign[]>([]);
 	let memberships = $state<Membership[]>([]);
+	let taxonomy = $state<CompanyTaxonomy>({ channels: [], segments: {} });
 	let pickCampaign = $state('');
 	let activityCampaign = $state('');
 	let activityContact = $state('');
@@ -81,6 +83,8 @@
 			website: company.website ?? '',
 			telephone: company.telephone ?? '',
 			nature_of_business: company.nature_of_business ?? '',
+			channel: company.channel ?? '',
+			segment: company.segment ?? '',
 			notes: company.notes ?? []
 		};
 	}
@@ -120,6 +124,9 @@
 		}
 	}
 	const siteHref = $derived(websiteHref(row?.website));
+	const segmentOptions = $derived(
+		row?.channel ? taxonomy.segments[row.channel] || [] : []
+	);
 
 	onMount(async () => {
 		if (!(await requireSession())) {
@@ -140,7 +147,8 @@
 					activityRows,
 					actionRows,
 					campaignRows,
-					membershipRows
+					membershipRows,
+					taxonomyRows
 				] = await Promise.all([
 					api<Company>(`/v1/companies/${id}`),
 					api<Member[]>('/v1/members'),
@@ -148,7 +156,10 @@
 					api<Activity[]>(`/v1/activities?company_id=${id}`),
 					api<ActionItem[]>(`/v1/actions?company_id=${id}&horizon=open&scope=team`),
 					api<Campaign[]>('/v1/campaigns').catch(() => [] as Campaign[]),
-					api<Membership[]>(`/v1/companies/${id}/campaigns`).catch(() => [] as Membership[])
+					api<Membership[]>(`/v1/companies/${id}/campaigns`).catch(() => [] as Membership[]),
+					api<CompanyTaxonomy>('/v1/companies/taxonomy').catch(
+						() => ({ channels: [], segments: {} }) as CompanyTaxonomy
+					)
 				]);
 				row = hydrate(company);
 				members = memberRows;
@@ -157,6 +168,7 @@
 				actions = actionRows;
 				campaigns = campaignRows;
 				memberships = membershipRows;
+				taxonomy = taxonomyRows;
 				syncActivityCampaign();
 				syncActivityContact();
 			});
@@ -186,11 +198,16 @@
 					website: blank(row.website),
 					telephone: blank(row.telephone),
 					nature_of_business: blank(row.nature_of_business),
+					channel: blank(row.channel),
+					segment: blank(row.channel) ? blank(row.segment) : null,
 					owner_user_id: row.owner_user_id,
 					record_state: row.record_state
 				})
 			});
 			row = hydrate(saved);
+			taxonomy = await api<CompanyTaxonomy>('/v1/companies/taxonomy').catch(
+				() => taxonomy
+			);
 			info = 'Company saved.';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Save failed.';
@@ -363,6 +380,38 @@
 					<option>Inactive</option>
 				</select>
 			</label>
+			<label>
+				{#if vacant(row.channel)}<span>Channel</span>{/if}
+				<input
+					bind:value={row.channel}
+					list="channel-options"
+					aria-label="Channel"
+					oninput={() => {
+						if (row?.segment && segmentOptions.length && !segmentOptions.includes(row.segment)) {
+							row.segment = '';
+						}
+					}}
+				/>
+			</label>
+			<label>
+				{#if vacant(row.segment)}<span>Segment</span>{/if}
+				<input
+					bind:value={row.segment}
+					list="segment-options"
+					aria-label="Segment"
+					disabled={!row.channel}
+				/>
+			</label>
+			<datalist id="channel-options">
+				{#each taxonomy.channels as channel (channel)}
+					<option value={channel}></option>
+				{/each}
+			</datalist>
+			<datalist id="segment-options">
+				{#each segmentOptions as segment (segment)}
+					<option value={segment}></option>
+				{/each}
+			</datalist>
 			<label>
 				<select bind:value={row.owner_user_id} aria-label="Owner">
 					<option value="">Unassigned</option>

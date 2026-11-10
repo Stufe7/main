@@ -197,9 +197,16 @@ export type Company = {
 	website: string | null;
 	telephone: string | null;
 	nature_of_business: string | null;
+	channel: string | null;
+	segment: string | null;
 	notes: CompanyNote[];
 	owner_user_id: string | null;
 	next_action_due_date: string | null;
+};
+
+export type CompanyTaxonomy = {
+	channels: string[];
+	segments: Record<string, string[]>;
 };
 
 export type Contact = {
